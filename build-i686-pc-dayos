@@ -1,23 +1,45 @@
 #!/bin/sh
+
+export TARGET=i686-pc-dayos
+export PREFIX=$PWD/rootsys
+export PATH=$PATH:$PREFIX
+export DAYOS_DIR=$PWD/DayOS
+
 if [ ! -d "DayOS" ]; then
 	git clone https://github.com/Sponk/DayOS.git
 fi
 
+if [ ! -d "DayOSLibraries" ]; then
+	git clone https://github.com/Sponk/DayOSLibraries.git
+fi
 
 if [ ! -d "rootsys" ]; then
 	mkdir rootsys
 	mkdir -p rootsys/usr/
 fi
 
-cp -r DayOS/libs/libdayos/include/ rootsys/usr/
+## Bootstrap libdayos and crt0
+if [ ! -d "dayoslibs-build" ]; then
+	mkdir dayoslibs-build
+fi
+
+cd dayoslibs-build
+cmake ../DayOSLibraries/ -DDAYOS_KERNEL_INCLUDE=$DAYOS_DIR/kernel/sys -DCMAKE_INSTALL_PREFIX=$PREFIX
+
+make -j8
+make install
+cd ..
+
+#cp -r DayOS/libs/libdayos/include/ rootsys/usr/
 cp -r DayOS/kernel/sys/* rootsys/usr/include
 
-mkdir build-gcc
-mkdir build-binutils
+if [ ! -d "build-gcc" ]; then
+	mkdir build-gcc
+fi
 
-export TARGET=i686-pc-dayos
-export PREFIX=$PWD/rootsys
-export PATH=$PATH:$PREFIX
+if [ ! -d "build-binutils" ]; then
+	mkdir build-binutils
+fi
 
 cd build-binutils
 ../binutils-2.25/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
@@ -26,7 +48,7 @@ make install
 cd ..
 
 cd build-gcc
-../gcc-5.3.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c --without-headers --with-sysroot=$PREFIX
+../gcc-5.3.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-sysroot=$PREFIX
 make -j8
 make install
 cd ..

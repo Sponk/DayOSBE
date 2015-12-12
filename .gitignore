@@ -1,0 +1,7 @@
+build-gcc
+build-binutils
+DayOS
+DayOSLibraries
+rootsys
+dayoslibs-build
+packages
