@@ -1,0 +1,35 @@
+#!/bin/sh
+if [ ! -d "DayOS" ]; then
+	git clone https://github.com/Sponk/DayOS.git
+fi
+
+
+if [ ! -d "rootsys" ]; then
+	mkdir rootsys
+	mkdir -p rootsys/usr/
+fi
+
+cp -r DayOS/libs/libdayos/include/ rootsys/usr/
+cp -r DayOS/kernel/sys/* rootsys/usr/include
+
+mkdir build-gcc
+mkdir build-binutils
+
+export TARGET=i686-pc-dayos
+export PREFIX=$PWD/rootsys
+export PATH=$PATH:$PREFIX
+
+cd build-binutils
+../binutils-2.25/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+make -j8
+make install
+cd ..
+
+cd build-gcc
+../gcc-5.3.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c --without-headers --with-sysroot=$PREFIX
+make -j8
+make install
+cd ..
+
+rm -rf build-gcc
+rm -rf build-binutils
