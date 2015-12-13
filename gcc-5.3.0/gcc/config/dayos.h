@@ -1,10 +1,7 @@
-/* Useful if you wish to make target-specific gcc changes. */
 #undef TARGET_DAYOS
 #define TARGET_DAYOS 1
  
-/* Default arguments you want when running your
-   i686-myos-gcc/x86_64-myos-gcc toolchain */
-#define LIB_SPEC "-ldayos" // -lg -lm" /* link against C standard libraries */
+#define LIB_SPEC "-ldayos -lm" // -lg" /* link against C standard libraries */
                                /* modify this based on your needs */
  
 /* Don't automatically add extern "C" { } around header files. */

@@ -1,3 +1,5 @@
+build-base
+DayOSBase
 build-gcc
 build-binutils
 DayOS
@@ -5,3 +7,5 @@ DayOSLibraries
 rootsys
 dayoslibs-build
 packages
+kernel-build
+DayOSKernel
