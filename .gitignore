@@ -1,11 +1,11 @@
-build-base
-DayOSBase
+build
+ramdisk.tar
+disk.img
+*.map
 build-gcc
 build-binutils
-DayOS
-DayOSLibraries
 rootsys
 dayoslibs-build
 packages
 kernel-build
-DayOSKernel
+

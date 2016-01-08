@@ -324,11 +324,11 @@ esac
 case ${host} in
 
 i[34567]86-*-dayos*)
-	extra_parts="$extra_parts usercrt0.o"
+	extra_parts="$extra_parts crt0.o"
 	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 	;;
 x86_64-*-dayos*)
-	extra_parts="$extra_parts usercrt0.o"
+	extra_parts="$extra_parts crt0.o"
 	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 	;;
 

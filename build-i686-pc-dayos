@@ -16,6 +16,7 @@ fi
 if [ ! -d "rootsys" ]; then
 	mkdir rootsys
 	mkdir -p rootsys/usr/
+	mkdir -p rootsys/image
 fi
 
 ## Bootstrap libdayos and crt0
@@ -53,5 +54,8 @@ make -j8
 make install
 cd ..
 
-rm -rf build-gcc
-rm -rf build-binutils
+ln $PREFIX/i686-pc-dayos/lib/libstdc++.a $PREFIX/usr/lib
+ln $PREFIX/i686-pc-dayos/lib/libsupc++.a $PREFIX/usr/lib
+
+#rm -rf build-gcc
+#rm -rf build-binutils

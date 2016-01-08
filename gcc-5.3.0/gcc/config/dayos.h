@@ -1,7 +1,7 @@
 #undef TARGET_DAYOS
 #define TARGET_DAYOS 1
  
-#define LIB_SPEC "-ldayos -lm" // -lg" /* link against C standard libraries */
+#define LIB_SPEC "-ldayos -lm -lgcc" // -lg" /* link against C standard libraries */
                                /* modify this based on your needs */
  
 /* Don't automatically add extern "C" { } around header files. */
@@ -18,6 +18,9 @@
     builtin_assert ("system=unix");   \
     builtin_assert ("system=posix");   \
   } while(0);
+  
+//#undef STANDARD_STARTFILE_PREFIX
+//#define STANDARD_STARTFILE_PREFIX "/usr/lib/"
   
 //#undef STANDARD_INCLUDE_DIR
 //#define STANDARD_INCLUDE_DIR "/include"

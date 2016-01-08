@@ -1,0 +1,9 @@
+timeout 10
+foreground ffffff
+background 000017
+splashimage=/boot/grub/splash.xpm.gz 
+
+title DayOS 0.0.3
+    kernel /dayos/bin/kernel
+    module /dayos/ramdisk.tar
+    boot
