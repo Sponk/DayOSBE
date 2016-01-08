@@ -22,15 +22,6 @@ int main(int argc, char* argv[])
 		printf("[ VFS ] Could not register VFS service. Will terminate.\n");
 		return -1;
 	}
-		
-	/*root = (dir_t*) malloc(sizeof(dir_t));
-	strcpy(root->path, "/");
-
-	mkdir("/", "dayos");
-	mkdir("/", "drives");
-	mkdir("/dayos/", "dev");*/
-
-	printf("[ VFS ] Virtual File System started.\n");
 
 	message_t msg;
 	struct vfs_request* request = (struct vfs_request*)&msg.message;
@@ -54,7 +45,6 @@ int main(int argc, char* argv[])
 
 			case VFS_SIGNAL_MOUNT_DEVICE:
 			{
-				// printf("Mounting from: %s\n", request->path);
 				struct vfs_request req = *request;
 				if (receive_message_timeout(&msg, msg.sender, 100, 10) !=
 					MESSAGE_RECEIVED)
@@ -67,10 +57,6 @@ int main(int argc, char* argv[])
 					msg.signal = SIGNAL_OK;
 
 				send_message(&msg, msg.sender);
-
-				 printf("Mounting to: %s %d 0x%x\n", request->path,
-				 msg.signal, rootfs.findNode(request->path));
-				// printf("Tree:\n%s\n", rootfs.toString().c_str());
 			}
 			break;
 
@@ -83,19 +69,11 @@ int main(int argc, char* argv[])
 					msg.signal = SIGNAL_OK;
 
 				send_message(&msg, msg.sender);
-
-				 //printf("Mounting to: %s %d 0x%x\n", request->path,
-				 //msg.signal, rootfs.findNode(request->path));
-				// printf("WRITING to: %s %d 0x%x\n", request->path, msg.signal,
-				// rootfs.findNode("/roramdisk/FUCK"));
 			}
 			break;
 
 			case VFS_SIGNAL_OPEN:
 			{
-				// printf("READING to: %s %d 0x%x\n", "RORORO", msg.signal,
-				// rootfs.findNode("/roramdisk/init.cfg"));
-				// break;
 				pid_t sender = msg.sender;
 				FSNode* node = rootfs.findNode(request->path);
 				struct vfs_file* file = (struct vfs_file*)&msg.message;
@@ -146,10 +124,7 @@ int main(int argc, char* argv[])
 				send_message(&msg, sender);
 			}
 			default:
-			{
-			}
-				// printf("[ VFS ] Unknown signal %d from %d\n", msg.signal,
-				// msg.sender);
+			{}
 		}
 	}
 
