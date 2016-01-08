@@ -15,10 +15,10 @@ fi
 #make -j8 install
 #cd ..
 
-cd build
-cmake ../ -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_TOOLCHAIN_FILE=$PWD/../CMake/DayOS.cmake
-make -j8 install
-cd ..
+#cd build
+#cmake ../ -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_TOOLCHAIN_FILE=$PWD/../CMake/DayOS.cmake
+#make -j8 install
+#cd ..
 
 ./build-image.sh
 qemu-system-i386 -m 512 -hda disk.img -name "DayOS" -serial stdio
