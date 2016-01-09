@@ -53,6 +53,7 @@ FILE* fopen(const char* filename, const char* mode)
 	if (!f)
 		return NULL;
 
+	f->mode = intmode;
 	request->magic = VFS_MAGIC;
 
 	// FIXME: STRNCPY!
@@ -99,8 +100,10 @@ FILE* fopen(const char* filename, const char* mode)
 	f->error = 0;
 	f->native_file = *vfile;
 	f->native_file.offset = 0;
+	
+	f->buffer = NULL;
 
-	setvbuf(f, NULL, _IOFBF, 512);
+	setvbuf(f, NULL, _IOLBF, 512);
 	return f;
 }
 
@@ -130,8 +133,8 @@ FILE* freopen(const char* filename, const char* mode, FILE* stream)
 
 int fclose(FILE* stream)
 {
-	// if(stream->buffer)
-	//	free(stream->buffer);
+	 if(stream->buffer)
+		free(stream->buffer);
 
 	free(stream);
 	return 0;
@@ -139,9 +142,41 @@ int fclose(FILE* stream)
 
 int fputc(int character, FILE* stream)
 {
-	if (!stream)
+	if (!stream || !stream->buffer)
 		return 0;
 	
+	switch(stream->buffer_mode)
+	{
+		case _IOFBF:
+			stream->buffer[stream->buffer_index] = character;
+			if(stream->buffer_index >= stream->buffer_size - 1)
+			{
+				if(!fflush(stream)) return character;
+				return 0;
+			}
+			
+			stream->buffer_index++;
+			return character;
+		break;
+			
+		case _IOLBF:
+			stream->buffer[stream->buffer_index] = character;
+			if(stream->buffer_index >= stream->buffer_size - 1 || character == '\n')
+			{
+				if(!fflush(stream)) return character;
+				return 0;
+			}
+			
+			stream->buffer_index++;
+			return character;
+		break;
+			
+		case _IONBF:
+			if(fwrite(&character, 1, 1, stream))
+				return character;
+			
+			return EOF;
+	}
 }
 
 int fgetc(FILE* stream)
@@ -260,15 +295,120 @@ int feof(FILE* stream)
 
 int fprintf(FILE* stream, const char* fmt, ...)
 {
-	printf("STUB: %s\n", __func__);
+	va_list ap;
+	int ret = 0;
+	va_start(ap, fmt);
+	ret = vfprintf(stream, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+static int fputn(unsigned int x, int base, FILE* stream)
+{
+	char buf[65];
+	const char* digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char* p;
+
+	if(base > 36)
+	{
+		return 0;
+	}
+
+	memset(buf, 0, 64);
+
+	p = buf + 64;
+	*p = '\0';
+	do
+	{
+		*--p = digits[x % base];
+		x /= base;
+	} while(x);
+		
+	return fputs(p, stream);
 }
 
 int vfprintf(FILE* stream, const char* fmt, va_list ap)
 {
-	printf("STUB: %s\n", __func__);
+	const char* s;
+	unsigned long n;
+	unsigned int ret = 0;
+
+	while (*fmt) 
+	{
+		if (*fmt == '%') 
+		{
+			fmt++;
+			switch (*fmt) 
+			{
+				case 's':
+					s = va_arg(ap, const char*);
+					ret += fputs(s, stream);
+					break;
+				case 'c':
+					n = va_arg(ap, int);
+					fputc(n, stream);
+					ret++;
+					break;
+				case 'd':
+				case 'u':
+					n = va_arg(ap, unsigned long int);
+					ret += fputn(n, 10, stream);
+					break;
+				case 'x':
+				case 'p':
+					n = va_arg(ap, unsigned long int);
+					ret += fputn(n, 16, stream);
+					break;
+				case 'l':
+					switch(fmt[1])
+					{
+						case 'd':
+							fmt++;
+							n = va_arg(ap, long int);
+							ret += fputn(n, 10, stream);
+							break;
+					}
+					break;
+				case '%':
+					fputc('%', stream);
+					ret++;
+					break;
+				case '\0':
+					goto out;
+				default:
+					fputc('%', stream);
+					fputc(*fmt, stream);
+					ret += 2;
+					break;
+			}
+		} 
+		else 
+		{
+			fputc(*fmt, stream);
+			ret++;
+		}
+		fmt++;
+	}
+
+out:
+	va_end(ap);
+	return ret;
 }
 
-int fflush(FILE* stream) { printf("STUB: %s\n", __func__); }
+int fflush(FILE* stream) 
+{
+	if(!stream) return EOF;
+	
+	int result = 0;
+	if(stream->mode == VFS_MODE_WO)
+	{
+		if(fwrite(stream->buffer, stream->buffer_size, 1, stream) != stream->buffer_size)
+			return EOF;
+	}
+
+	stream->buffer_index = 0;
+	return 0;
+}
 
 size_t fwrite(const void* ptr, size_t size, size_t count, FILE* stream)
 {
@@ -294,12 +434,20 @@ size_t fwrite(const void* ptr, size_t size, size_t count, FILE* stream)
 	return sz;
 }
 
-// FIXME: Implementation!
 int fputs(const char* str, FILE* stream)
 {
-	// printf("STUB: %s\n", __func__);
-	printf("%s", str);
-	return 0;
+	/*if(!str || !stream)
+		return 0;
+
+	int i = 0;
+	while(*str)
+	{
+		fputc(&str[i], stream);
+		i++;
+	}
+	return i;*/
+	
+	printf("File: 0x%x, buffer index: %d buffer size: %d path: %s\n", stream, stream->buffer_index, stream->buffer_size, stream->native_file.path);
 }
 
 char* fgets(char* str, int num, FILE* stream)
@@ -403,6 +551,7 @@ int setvbuf(FILE* stream, char* buffer, int mode, size_t size)
 
 	stream->buffer_mode = mode;
 	stream->buffer_size = size;
+	stream->buffer_index = 0;
 	return 0;
 }
 

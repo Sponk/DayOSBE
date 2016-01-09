@@ -12,8 +12,10 @@ typedef struct
 	uint32_t error;
 	int ungetc_data;
 	
+	uint32_t mode;
 	uint32_t buffer_mode;
 	size_t buffer_size;
+	size_t buffer_index;
 	char* buffer;
 }FILE;
 

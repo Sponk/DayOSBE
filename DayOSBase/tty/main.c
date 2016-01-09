@@ -178,12 +178,12 @@ int main()
 
 	uint8_t shifted;
 	char lastChar = 0;
-
+	
+	struct vfs_request* rq = (struct vfs_request*) &msg.message;
 	while (1)
 	{
 		msg.signal = 0;
-		while (receive_message(&msg, MESSAGE_ANY) != MESSAGE_RECEIVED)
-			;
+		while (receive_message(&msg, MESSAGE_ANY) != MESSAGE_RECEIVED);
 
 		switch (msg.signal)
 		{
@@ -261,9 +261,16 @@ int main()
 				send_message(&msg, msg.sender);
 				break;
 
-			case DEVICE_WRITE:
+			case DEVICE_WRITE: {
+				
+				char* data = malloc(msg.size);
+				read_message_stream(data, msg.size, msg.sender);
 
-				break;
+				printf("%s", data);
+
+				free(data);
+			}
+			break;
 		}
 	}
 
