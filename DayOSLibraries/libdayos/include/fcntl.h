@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <dirent.h>
+
 #define S_IRWXU (00700)
 #define S_IRUSR (00400)
 #define S_IWUSR (00200)
@@ -38,6 +40,8 @@
 #define F_SETFD 2
 #define F_GETFL 3
 #define F_SETFL 4
+
+#define FD_CLOEXEC 1
 
 #include <stdio.h>
 

@@ -4,7 +4,7 @@
 
 extern int main(int argc, char* argv[]);
 extern void setup_stack_chk();
-extern void InitHeap();
+extern void init_libdayos();
 extern void run_constructors();
 extern void run_destructors();
 
@@ -16,7 +16,7 @@ extern FILE* stderr;
 void _start()
 {
 	setup_stack_chk();
-	InitHeap();
+	init_libdayos();
 		
 	pid_t vfs_service = get_service_pid("vfs");
 	// FIXME: Get from kernel somehow!

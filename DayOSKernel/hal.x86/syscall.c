@@ -7,6 +7,13 @@
 #include <idt.h>
 #include <elf.h>
 #include <kmessage.h>
+#include <heap.h>
+#include <sys/utsname.h>
+#include <string.h>
+
+// Gets true if the pointer is valid. 
+// FIXME: NOT PERFECT: THE KERNEL HEAP IS STILL ACCESSIBLE!
+#define CHECK_POINTER(p) ((p > PAGEPOOL_END))
 
 // TODO: Syscalls einrichten
 struct cpu* Syscall(struct cpu* cpu_old)
@@ -29,6 +36,14 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	// send_message
 	case 3: {
 			message_t* msg = (message_t*) cpu_old->ebx;
+			
+			if(!CHECK_POINTER(cpu_old->ebx))
+			{
+				DebugPrintf("[ SYSCALL ] Invalid pointer to 0x%x caught!\n", cpu_old->ebx);
+				asm("int $0x1");
+				break;
+			}
+			
 			process_t* proc = GetProcessByPid(msg->receiver);
 			cpu_old->eax = ksend_message(current_process, proc, msg);
 		}		
@@ -37,13 +52,21 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	// receive_message
 	case 4: {
 			message_t* msg = (message_t*) cpu_old->ebx;
+		
+			if(!CHECK_POINTER(cpu_old->ebx))
+			{
+				DebugPrintf("[ SYSCALL ] Invalid pointer to 0x%x caught!\n", cpu_old->ebx);
+				asm("int $0x1");
+				break;
+			}
+			
 			cpu_old->eax = kreceive_message(current_process, msg, cpu_old->ecx);
 		}
 		break;
 	
 	// sbrk
 	case 5: {
-			if(cpu_old->ebx <= 0)
+			if((int) cpu_old->ebx <= 0)
 			{
 				DebugLog("[ SYSCALL ] Can't sbrk process!");
 				cpu_old->eax = -1;
@@ -53,7 +76,7 @@ struct cpu* Syscall(struct cpu* cpu_old)
 			// FIXME: Limit fuer sbrk einfuehren, sonst kann jeder Prozess alles an Speicher haben!
 			// FIXME: Auf 4k boundary prüfen!
 			vmm_alloc(current_process->context, USERSPACE_PAGEPOOL + current_process->sbrk_state , cpu_old->ebx);
-			cpu_old->eax = USERSPACE_PAGEPOOL + current_process->sbrk_state;			
+			cpu_old->eax = USERSPACE_PAGEPOOL + current_process->sbrk_state;
 
 			current_process->sbrk_state += cpu_old->ebx;
 			
@@ -91,6 +114,14 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	
 	// launch_elf_program
 	case 9: {
+		
+		if(!CHECK_POINTER(cpu_old->ebx))
+		{
+			DebugPrintf("[ SYSCALL ] Invalid pointer to 0x%x caught!\n", cpu_old->ebx);
+			asm("int $0x1");
+			break;
+		}
+		
 		vmm_context_t* context = CreateUsermodeContext(0);
 		function_t entry = ParseElf(cpu_old->ebx, context);
 		
@@ -103,8 +134,63 @@ struct cpu* Syscall(struct cpu* cpu_old)
 		CreateUserProcess(entry, context);
 	}
 	break;
+	
+	// Get version information
+	case 10: {
+		if(!CHECK_POINTER(cpu_old->ebx))
+		{
+			DebugPrintf("[ SYSCALL ] Invalid pointer to 0x%x caught!\n", cpu_old->ebx);
+			asm("int $0x1");
+			break;
+		}
 		
-	default: DebugPrintf("[ SYSCALL ] Unknown syscall: 0x%x\n", cpu_old->eax);
+		struct utsname* data = (struct utsname*) cpu_old->ebx;
+		strncpy(data->sysname, DAYOS_SYSNAME, sizeof(data->sysname));
+		strncpy(data->release, DAYOS_RELEASE, sizeof(data->release));
+		strncpy(data->version, DAYOS_VERSION, sizeof(data->version));
+		strncpy(data->machine, DAYOS_ARCH, sizeof(data->machine));
+		
+		cpu_old->eax = 0;
+	}
+	break;
+	
+	// register signal handler
+	case 11: {
+		if(!CHECK_POINTER(cpu_old->ebx))
+		{
+			DebugPrintf("[ SYSCALL ] Invalid pointer to 0x%x caught!\n", cpu_old->ebx);
+			asm("int $0x1");
+			break;
+		}
+		
+		current_process->signal = cpu_old->ebx;
+	}
+	break;
+	
+	// raise signal for process
+	case 12: {	
+		// Send signal to running process
+		if(cpu_old->ecx == -1)
+		{
+			cpu_old->ecx = cpu_old->eip;
+			cpu_old->eip = current_process->signal;
+			cpu_old->eax = cpu_old->ebx;
+		}
+		else // Send signal to other process
+			// FIXME: Check privs!
+		{
+			process_t* proc = GetProcessByPid(cpu_old->ecx);
+			if(proc)
+			{
+				proc->state->ecx = proc->state->eip;
+				proc->state->eip = proc->signal;
+				proc->state->eax = cpu_old->ebx;
+			}
+		}
+	}
+	break;
+	
+	default: DebugPrintf("[ SYSCALL ] Unknown syscall 0x%x from %d\n", cpu_old->eax, current_process->pid);
 	}
 	
 	return cpu_old;

@@ -9,7 +9,7 @@ void copy_message(message_t* dest, message_t* src)
 {
 	if(src == NULL || dest == NULL)
 		return;
-
+	
 	dest->sender = src->sender;
 	dest->receiver = src->receiver;
 	dest->signal = src->signal;
@@ -121,9 +121,7 @@ int ksend_message(process_t* sender, process_t* receiver, message_t* msg)
 	
 	//if(sender == receiver || sender->pid == receiver->pid) // FIXME: Very strange. Sometimes messages return back to the sender.
 	//	return MESSAGE_ERR_SEND;
-	
-	// DebugPrintf("sender: %d receiver: %d\n", sender->pid, receiver->pid);
-	
+
 	msg->sender = sender->pid;
 	msg->receiver = receiver->pid;
 
@@ -147,6 +145,8 @@ int ksend_message(process_t* sender, process_t* receiver, message_t* msg)
 	newmsg->next = NULL;
 	receiver->messages.last = newmsg;
 	
+	// DebugPrintf("sender: %d receiver: %d msg: 0x%x\n", sender->pid, receiver->pid, msg);
+
 	copy_message(&newmsg->message, msg);
 	receiver->messages.num_messages++;
 
@@ -196,7 +196,8 @@ int kreceive_message(process_t* current_process, message_t* msg, uint32_t who)
 		}
 	}
 	
-	copy_message(msg, &node->message);
+	// DebugPrintf("Receiving message: 0x%x and 0x%x\n", msg, &node->message);
+	copy_message(msg, &node->message);	
 	kfree(node);
 	current_process->messages.num_messages--;
 	

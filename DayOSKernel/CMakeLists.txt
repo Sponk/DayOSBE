@@ -35,6 +35,8 @@ if(${ARCH} STREQUAL "x86")
 	include_directories("include" "hal.x86/include" "sys")
 
 	set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf32")
+	
+	add_definitions(-DDAYOS_SYSNAME="DayOS" -DDAYOS_ARCH="i686-pc-dayos" -DDAYOS_RELEASE="0.0.3" -DDAYOS_VERSION="1")
 endif()
 
 enable_language(ASM_NASM)

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <dayos.h>
 #include <stdlib.h>
+#include <syscall.h>
 
 #define LOG(msg) printf("[ INIT ] %s\n", msg)
 #define LOG_STRING(msg, str) printf("[ INIT ] %s: %s\n", msg, str)
@@ -24,7 +25,7 @@ void execute_program(const char* path)
 	content = (char*) malloc(sz);
 	fread(content, sz, 1, exec);
 	
-	syscall1(9, content);
+	syscall1(9, (uintptr_t) content);
 	
 	fclose(exec);
 	free(content);

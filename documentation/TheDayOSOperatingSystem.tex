@@ -1,0 +1,31 @@
+\documentclass[10pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{verbatim}
+
+\author{Yannick Pflanzer}
+\title{The DayOS Operating System}
+
+\makeindex
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\input{chapters/TheKernel.tex}
+\input{chapters/IPCThroughMessaging.tex}
+\input{chapters/TheBootingProcess.tex}
+\input{chapters/OperatingSystemInterfaces.tex}
+
+\end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+
+
+

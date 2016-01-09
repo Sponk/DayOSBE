@@ -1,5 +1,5 @@
 file(GLOB_RECURSE HEADERS *.h)
 file(GLOB_RECURSE SOURCES *.c*)
 
-add_executable(mkfs.ext2 ${SOURCES} ${HEADERS})
+add_executable(mkfs.ext2 ${SOURCES} ${HEADERS} ${CRT0_SRC})
 target_link_libraries(mkfs.ext2 dayos m)

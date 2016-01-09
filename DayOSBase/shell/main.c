@@ -2,6 +2,7 @@
 #include <string.h>
 #include <dayos.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "tlli-master/include/tlli.h"
 
 char buffer[512];
@@ -169,6 +170,10 @@ int main()
 			else if (!strcmp("exit", buffer))
 			{
 				return 0;
+			}
+			else if (!strcmp("raise", buffer))
+			{
+				raise(SIGSEGV);
 			}
 			else if (!strcmp("readram", buffer))
 			{

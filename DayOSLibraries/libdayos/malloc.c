@@ -11,6 +11,7 @@ extern void* sbrk(size_t size);
 #define NEXT_BLOCK(x) (BLOCK_START(x) + x->size)
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 #define MAGIC 0xDEADBEEF
 
@@ -32,10 +33,19 @@ node_t* createBlock(node_t* parent, size_t sz)
 
 	parent->next = NEXT_BLOCK(parent);
 	
+	size_t oldLimit = currentLimit;
 	while(((uint32_t)parent->next) + sz >= (currentLimit - HEADERSIZE))
 	{
-		sbrk(0x1000);
+		//sbrk(0x1000);
 		currentLimit += 0x1000;
+	}
+	
+	/*currentLimit = MAX(currentLimit, ((uintptr_t) parent->next) + sz + HEADERSIZE);*/
+	if(oldLimit != currentLimit)
+	{
+		/*currentLimit += 0x1000;
+		currentLimit &= ~0xFFF;		
+	*/	sbrk(currentLimit - oldLimit);
 	}
 	
 	parent->next->size = sz;

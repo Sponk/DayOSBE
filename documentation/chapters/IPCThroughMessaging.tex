@@ -1,0 +1,24 @@
+\chapter{Inter Process Communication Through Messaging}
+\section{The Abstract Idea}
+When two or more processes need to share data, inform each others about changes or simply want to interchange some form
+of data, the easiest way in DayOS is message passing. The idea is that each process possesses some sort of
+"in-box" in which received messages are saved until the process explicitly looks for them.
+When sending a message the sending process has to fill up a structure containing an integer for some sort of
+signal and a character array of a predefined size ($MESSAGE\_STRING\_SIZE = 512$ by default on IA-32) which can be used
+for all sorts of data, be it ASCII strings, UTF-8 strings or binary data. In the case that not the whole message
+string is used there is a size attribute which specifies the size to be transferred to the receiving process. \\ \\
+It is very easy to abstract interrupts and callbacks in this fashion, it even allows for simple forms of Remote Procedure Calls (RPC).
+It is also a viable method of transferring data from some sort of disk driver to the file system driver or
+file data from the file system to an user process.
+
+\section{Implementation In The DayOS Kernel}
+The message IPC system is one of the few pieces of software that run inside the kernel in a privileged position so it can copy over
+data from one process to another without causing exceptions. The implementation consists of a doubly linked list for each process which
+contains a FIFO queue of messages received. When a process calls the syscall to request the next message of a given sender process,
+the FIFO is searched for the first message that was sent by the specified process or an error when no message could be found.
+The kernel function to receive a message is called \\ \\
+\texttt{uint32\_t kreceive\_message(process\_t* receiver, message\_t* message, uint32\_t who)}. \\
+The arguments are pretty much self explanatory, the receiving process (in the case of a system call the currently running process)
+is the first argument, the second one is a pointer to a valid message\_t object from the currently running process (can be on the stack or
+on the heap) and who is the Process Identification (PID) from the sending process. The receiver is checked to be a valid process and
+the message address is being checked to not point to a kernel mode or un-mapped memory address to prevent overwriting sensitive data.

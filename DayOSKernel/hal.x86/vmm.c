@@ -44,13 +44,16 @@ void destroy_context(vmm_context_t* context)
 		if(context->pagedir[i] != 0 && context->pagedir[i] != kernel_context->pagedir[i])
 		{
 			uintptr_t* pagetable = (uintptr_t*) context->pagedir[i];
+			uintptr_t* kernel_table = (uintptr_t*) kernel_context->pagedir[i];
 			
 			for(int j = 0; j < 1024; j++)
-				if(pagetable[j] && pagetable[j] > HEAP_END)
+			{
+				uintptr_t entry = pagetable[j] & ~0xFFF;
+				if(entry && entry != kernel_table[j] & ~0xFFF)
 				{
-					pmm_free((void*)(pagetable[j] & ~0xFFF));
+					pmm_free((void*)(entry));
 				}
-			
+			}
 			//DebugPrintf("Freeing page: 0x%x\n", context->pagedir[i] & 0xFFFFFF00);
 			pmm_free((void*)(context->pagedir[i] & 0xFFFFF000));
 		}

@@ -12,6 +12,10 @@
 #define PROCESS_RUNNING 1
 #define PROCESS_SLEEPING 2
 #define PROCESS_PAUSED 3
+#define PROCESS_WAITPID 4
+
+// Maximum status number
+#define PROCESS_STATUS_MAX 4
 
 #define ROOT_UID 0
 
@@ -34,11 +38,12 @@ typedef struct process_struct
 	struct cpu* state;
 	vmm_context_t* context;
 	uint32_t pid;
+	uintptr_t signal; // The signal function that is called when a signal gets send
 
 	//message_t messages[MESSAGE_BUFFER_SIZE];
 	struct MESSAGE_LIST messages;
 	
-	uint32_t sbrk_state;	
+	uint32_t sbrk_state;
 
 	uint8_t* stack;
 	uint8_t* user_stack;

@@ -3,15 +3,6 @@
 export TARGET=i686-pc-dayos
 export PREFIX=$PWD/rootsys
 export PATH=$PATH:$PREFIX
-export DAYOS_DIR=$PWD/DayOS
-
-if [ ! -d "DayOS" ]; then
-	git clone https://github.com/Sponk/DayOS.git
-fi
-
-if [ ! -d "DayOSLibraries" ]; then
-	git clone https://github.com/Sponk/DayOSLibraries.git
-fi
 
 if [ ! -d "rootsys" ]; then
 	mkdir rootsys
@@ -25,15 +16,14 @@ if [ ! -d "dayoslibs-build" ]; then
 fi
 
 cd dayoslibs-build
-cmake ../DayOSLibraries/ -DDAYOS_KERNEL_INCLUDE=$DAYOS_DIR/kernel/sys -DCMAKE_INSTALL_PREFIX=$PREFIX
+cmake ../DayOSLibraries/ -DDAYOS_KERNEL_INCLUDE=$PWD/../DayOSKernel/sys 
+-DCMAKE_INSTALL_PREFIX=$PREFIX
 
 make -j8
 make install
 cd ..
 
-#cp -r DayOS/libs/libdayos/include/ rootsys/usr/
 cp -r DayOS/kernel/sys/* rootsys/usr/include
-
 if [ ! -d "build-gcc" ]; then
 	mkdir build-gcc
 fi
@@ -57,5 +47,6 @@ cd ..
 ln $PREFIX/i686-pc-dayos/lib/libstdc++.a $PREFIX/usr/lib
 ln $PREFIX/i686-pc-dayos/lib/libsupc++.a $PREFIX/usr/lib
 
-#rm -rf build-gcc
-#rm -rf build-binutils
+rm -rf build-gcc
+rm -rf build-binutils
+rm -rf dayoslibs-build

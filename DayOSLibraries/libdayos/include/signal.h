@@ -1,6 +1,7 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#define SIG_ERR 1
 #define SIGINT 2
 #define SIGILL 4
 #define SIGFPE 8
@@ -11,6 +12,7 @@
 #define NSIG 23
 
 #define SIG_DFL 0
+#define SIG_IGN 1
 
 #ifdef __cplusplus
 extern "C" {

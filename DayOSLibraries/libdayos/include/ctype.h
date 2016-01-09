@@ -1,21 +1,21 @@
 #ifndef CTYPE_H
 #define CTYPE_H
 
-inline int isspace(int x) { return (x == ' ' || x == '\t' || x == '\n' || x == '\v' || x == '\f' || x == '\r'); }
-inline int isdigit(int x) { return (x >= '0' && x <= '9'); }
-inline int isxdigit(int x) { return ((x >= 'A' && x <= 'F') && (x >= 'a' && x <= 'f') && (x >= '0' && x <= '9')); }
-inline int isalpha(int x) { return (x >= 'A' && x <= 'z'); }
-inline int toupper(int x) { return (x + 26); }
-inline int tolower(int x) { return (x - 26); }
-inline int isprint(int x) { return (x >= 0x1f || x == 0x7f); }
-inline int isalnum(int x) { return (isdigit(x) || isalpha(x)); }
+int isspace(int x);
+int isdigit(int x);
+int isxdigit(int x);
+int isalpha(int x);
+int toupper(int x);
+int tolower(int x);
+int isprint(int x);
+int isalnum(int x);
 
-inline int iscntrl(int x) { return !isprint(x); }
-inline int isgraph(int x) { return (isprint(x) && x != ' '); }
+int iscntrl(int x);
+int isgraph(int x);
 
-inline int isupper(int x) { return (x >= 'A' && x <= 'Z'); }
-inline int islower(int x) { return (x >= 'a' && x <= 'z'); }
-inline int ispunct(int x) { return (isgraph(x) && !isalnum(x)); }
+int isupper(int x);
+int islower(int x);
+int ispunct(int x);
 
 #define isspace(x)                                                             \
 	((x) == ' ' || (x) == '\t' || (x) == '\n' || (x) == '\v' || (x) == '\f' || \

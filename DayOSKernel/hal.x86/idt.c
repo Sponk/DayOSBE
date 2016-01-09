@@ -226,7 +226,9 @@ struct cpu* int_handler(struct cpu* cpu_old)
 			DebugPrintf("at 0x%x in process %d\n", faulting_address, current_process->pid);
 		}
 		
-		if(kernel_mode)
+		// Only kernel panic if it's not a debug exceptions.
+		// Those are thrown when invalid syscalls are made.
+		if(kernel_mode && cpu_old->intr != 1)
 			panic_cpu(errors[cpu_old->intr], cpu_old);
 
 		kprintf("\nERROR: Process %d caused an error %d (%s) at 0x%x and will be terminated.\n", current_process->pid, 

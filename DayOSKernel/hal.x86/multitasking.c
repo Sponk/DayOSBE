@@ -31,6 +31,7 @@ process_t* CreateKernelProcess(void (*entry)())
 	process->stack = stack;
 	process->sleep_timer = 0;
 	process->status = PROCESS_RUNNABLE;
+	process->signal = 0;
 	
 	struct cpu new_state = 
 	{
@@ -66,7 +67,10 @@ process_t* CreateKernelProcess(void (*entry)())
 	process->context = CreateUsermodeContext(1);
 	process->sbrk_state = 0;
 	process->uid = ROOT_UID;
+	
 	process->messages.num_messages = 0;
+	process->messages.first = NULL;
+	process->messages.last = NULL;
 	
 	num_proc++;
 	return process;
@@ -86,6 +90,7 @@ process_t* CreateUserProcess(void (*entry)(), vmm_context_t* context)
 	process->user_stack = user_stack;
 	process->sleep_timer = 0;
 	process->status = PROCESS_RUNNABLE;
+	process->signal = 0;
 	
 	struct cpu new_state = 
 	{
@@ -119,8 +124,11 @@ process_t* CreateUserProcess(void (*entry)(), vmm_context_t* context)
 	
 	process->pid = num_proc;
 	process->context = context;
+	
 	process->messages.num_messages = 0;
-
+	process->messages.first = NULL;
+	process->messages.last = NULL;
+	
 	vmm_alloc(process->context, (uintptr_t) process->user_stack, PAGESIZE);
 	process->sbrk_state = PAGESIZE; // Because the stack starts at USERSPACE_PAGEPOOL and is thus part of the "heap"
 

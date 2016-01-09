@@ -1,0 +1,166 @@
+\chapter{Operating System Interfaces}
+\section{Registering and Querying a Service}
+\subsection{What is a Service?}
+Since DayOS is using a micro kernel all operating system related tasks run in external user mode processes without any access to internal kernel structures.
+This allows for a great deal of security and some other goodies related to it but brings a few limitations and problems with it.
+One of the problems is that all OS related subsystems run in processes that are not fixed, that means
+variation of attributes like the Process ID (PID) or even variations in the implementation.
+To make it possible for applications to talk to any non-kernel component the program has
+to know the other processes PID to send and receive messages. This is the main use-case for the Service Manager (SM).
+It allows registering a service to a name with a PID and allows querying the PID of the process
+that was registered for this service. \\ \\
+The SM has to run in the kernel to be able to check if a process is still running or if it crashed
+to allow restarting the service. As soon as there are interfaces to the kernel functionality required this daemon should run
+in user mode.
+\subsection{Registering a Service}
+Registering a service is specified as a message to to the SM with the signal \texttt{SERVICE\_REGISTER = 1}.
+Since the SM is running as a kernel process it has a fixed PID = 0. The message body is undefined and does not
+produce any side effects. If the request was successful the SM sends a message with \texttt{MESSAGE\_OK} back to you.
+If it failed a message with \texttt{MESSAGE\_FAIL} is sent.
+
+\subsection{Querying a Service}
+Querying a serice is specified as a message to the SM with the signal \texttt{SERVICE\_REQUEST = 2}.
+The SM in turn will then send a message with the signal being the PID of the requested service or \texttt{MESSAGE\_FAIL}
+if no such service was found.
+
+\section{The Virtual File System}
+The Virtual File System (VFS) in DayOS is a fundamental part of the system.
+It takes responsibility of managing (device-)files, directories, links and mount points
+for all applications. The VFS runs in user mode and has in no way access to internal
+kernel structures. After the process starts it immediately has to register itself as
+the "vfs" service. During run time the VFS process has to respond to certain signals
+in a certain manner. \\ \\
+The VFS transfers data using the following structures:
+
+\verbatiminput{../libs/libdayos/include/vfs.h}
+
+The VFS has to support the following signals: \\
+\begin{itemize}
+\label{create_device}
+\item VFS\_SIGNAL\_CREATE\_DEVICE = 0\\
+  Creates a new device file and adds it to the VFS internal list of files.
+  A device file can be one one of the following types:
+
+  \begin{enumerate}
+    \item VFS\_CHARACTER\_DEVICE = 0
+	\item VFS\_BLOCK\_DEVICE = 1
+	\item VFS\_MOUNTPOINT = 2
+	\item VFS\_DIRECTORY = 3
+  \end{enumerate}
+
+  This signal has a vfs\_request structure in its message body with all needed data to actually
+  create the device file internally. How this is handled internally is not specified. \\ \\
+  When the file could be created, send a message with signal "SIGNAL\_OK" to the requesting process and
+  the signal "SIGNAL\_FAIL" on failure.
+
+\item VFS\_SIGNAL\_OPEN = 1 \\
+  This signal gets a vfs\_request structure in its message body.
+  On success it results in a message with signal "SIGNAL\_OK" and a vfs\_file structure in the body to be sent
+  to the requesting process. On failure a message with "SIGNAL\_FAIL" is being sent.
+
+\item VFS\_SIGNAL\_MOUNT\_DEVICE = 2 \\
+  Used to mount devices represented as device files to any location in the VFS. This action needs
+  superuser access (The calling process has to have the User ID (UID) 0).
+  If a prerequisites are met the VFS sends a mount request to the FS driver that was requested by
+  the caller. %% TODO: Need specification for that!
+
+\end{itemize}
+
+\section{The Driver Interface}
+\subsection{General Interface}
+In DayOS every device is represented as a file in the VFS tree. Every driver has to deliver
+the abstract interface dictated by this design to be able to handle all requests that may
+be sent. When a driver starts and finishes his initialisation routine a device file has to be
+created. This procedure is described in the section \ref{create_device} about the VFS. \\ \\
+In the most general terms a driver has to respond to at least three different signals:
+DEVICE\_READ, DEVICE\_WRITE and DEVICE\_INFO. Those however have to be handled differently
+for different types of device.
+
+\subsection{Data Interchange Structures}
+The following structures are used to transfer data between drivers and applications.
+\begin{verbatim}
+#define REQUEST_MAGIC 0xDEADBEEF
+
+typedef enum
+{
+	FS_SIGNAL_MKDIR = 0,
+	FS_SIGNAL_OPEN = 1,
+	FS_SIGNAL_CLOSE = 2,
+	FS_SIGNAL_READ = 3,
+	FS_SIGNAL_WRITE = 4,
+	FS_SIGNAL_MOUNT = 5,
+	FS_SIGNAL_STAT = 6
+} FS_SIGNALS;
+
+typedef enum
+{
+	DEVICE_READ = 0x1,
+	DEVICE_WRITE = 0x2
+} DEVICE_ACTIONS;
+
+struct device_request
+{
+    uint32_t magic;
+    uint32_t size;
+    uint8_t character;
+};
+
+struct fs_request
+{
+    uint32_t magic;
+    FS_SIGNALS signal;    
+};
+
+\end{verbatim}
+
+\subsection{Character Devices}
+Character devices are devices that handle data one character at a time. This is the reason why
+a character device in DayOS answers to DEVICE\_READ requests with one character per message.
+Every driver should have an internal buffer so no data is lost between requests. If the
+buffer is empty the driver queues the pending request and handles it as soon as possible.
+Writing to a character device also works on a per character basis but it is possible to
+send full messages that are going to be handled at once without the need to resend a message
+for every character.
+
+%% TODO: Should char devices be able to send their whole buffer at once?
+
+\subsection{Block Devices}
+Block devices can only read and write data in fixed block sizes instead of per character.
+That means that requesting data can exceed the size of one message very easily and has
+to split up to multiple packets. The protocol to transfer data (in both directions)
+is defined like following: \\
+\begin{enumerate}
+\item Initial request with the signal DEVICE\_READ and a device\_request in the body.
+\item Wait for answer from the opposite side. The signal is SIGNAL\_OK or SIGNAL\_FAIL.
+\item Now the opposite side will send a load of messages with the signal being the size sent.
+\item If the message has a size of 0, quit the loop. If the message has a size > 0, continue at step 3.
+\end{enumerate}
+
+\subsection{File System Drivers}
+File System Drivers (FSDs) are among the few drivers that depend heavily on other drivers.
+They also do not create device files, but only provide mountpoints. When a device is mounted
+the requesting process sends a request to the VFS. The VFS looks for the device file and
+sends the file system driver that was requested a message. The FSD will then open the device file and
+create a mount point in the VFS if the File System (FS) on the device is the right type the FSD
+can read/write. The VFS will then create the internal mountpoint so future accesses to files
+will recognize the mounted device. The procedure works like as follows: \\
+\begin{enumerate}
+\item User application sends a vfs\_request to the VFS service with the \\
+VFS\_SIGNAL\_MOUNT\_DEVICE signal. The first message has the source device in the path. 
+A second message with the target directory in the path attribute
+and the requested filesystem driver PID in the argument attribute. All FSs register with the service manager.
+
+\item VFS service looks if the requested device exists. If not, the application receives a SIGNAL\_FAIL message.
+Otherwise the VFS service requests a mount at the given FSD PID. If a message returns with SIGNAL\_OK, the mount point
+is being created. Otherwise the application receives a SIGNAL\_FAIL message.
+
+\item The FSD receives a request from the VFS to mount a certain device with a fs\_request in the message body.
+\end{enumerate}
+
+\subsection{Graphical Devices}
+
+\subsection{Transmission of Environment Variables and Arguments}
+When an application is started it gets an environment and command line arguments passed to it.
+This chapter is used to specify how this is done on the side of the runtime library. This features does
+not need the kernel in principle given that parent process and child process use the same
+functions to transmit the needed data.
