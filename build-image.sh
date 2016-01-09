@@ -1,6 +1,11 @@
 #!/bin/sh
 rm ./ramdisk.tar
 
+cp build/image/kernel rootsys/
+cp build/image/uname rootsys/image
+cp build/image/*.elf rootsys/image
+cp build/image/*.drv rootsys/image/system
+
 # Ramdisk bauen
 cp init.cfg rootsys/image
 cd rootsys/image
