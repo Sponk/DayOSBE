@@ -1,14 +1,15 @@
 #include <malloc.h>
 #include <syscall.h>
 #include <string.h>
+#include <stdio.h>
 
 extern void* sbrk(size_t size);
 
 #define HEADERSIZE sizeof(node_t)
 
-#define BLOCK_HEADER(x) (((void*) x) - HEADERSIZE)
-#define BLOCK_START(x) (((void*) x) + HEADERSIZE)
-#define NEXT_BLOCK(x) (BLOCK_START(x) + x->size)
+#define BLOCK_HEADER(x) (void*)(((uintptr_t) x) - HEADERSIZE)
+#define BLOCK_START(x) (void*)(((uintptr_t) x) + HEADERSIZE)
+#define NEXT_BLOCK(x) (void*)((uintptr_t) BLOCK_START(x) + x->size)
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))

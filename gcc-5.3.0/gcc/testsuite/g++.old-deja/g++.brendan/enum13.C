@@ -1,6 +1,6 @@
 // { dg-do assemble  }
 // GROUPS passed enums
-enum COLOR { red, green, blue };
+enum COLOR { red, green, BLUE# };
  
 struct S {
     COLOR       color:2;

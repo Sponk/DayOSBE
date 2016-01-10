@@ -22,7 +22,7 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	{
 	// putch
 	case 1: 
-		kputch((char) cpu_old->ebx);
+		// kputch((char) cpu_old->ebx);
 		DebugPrintf("%c", (char) cpu_old->ebx);
 		break;
 	// exit
@@ -187,6 +187,21 @@ struct cpu* Syscall(struct cpu* cpu_old)
 				proc->state->eax = cpu_old->ebx;
 			}
 		}
+	}
+	break;
+	
+	case 13: {
+		uintptr_t addr = cpu_old->ecx;
+		if(current_process->uid != 0 
+			|| !CHECK_POINTER(cpu_old->ebx) 
+			|| (addr >= HEAP_START && addr <= HEAP_END))
+		{
+			DebugPrintf("Operation not permitted for process %d\n", current_process->uid);
+			asm("int $0x1");
+			break;
+		}
+		
+		map_page(current_process->context, addr, addr, 1);
 	}
 	break;
 	

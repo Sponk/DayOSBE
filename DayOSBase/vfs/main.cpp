@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 
 	if (register_service("vfs") != SIGNAL_OK)
 	{
-		printf("[ VFS ] Could not register VFS service. Will terminate.\n");
+		debug_printf("[ VFS ] Could not register VFS service. Will terminate.\n");
 		return -1;
 	}
 

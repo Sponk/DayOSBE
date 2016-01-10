@@ -14,7 +14,7 @@ set(CMAKE_MODULE_PATH
 
 set(ASM_EXTENSION *.S)
 set(CMAKE_C_FLAGS "-Wall -nostartfiles -nostdlib") # -pedantic-errors")
-set(CMAKE_CXX_FLAGS "-fno-use-cxa-atexit -nostartfiles -Wall -Wextra -pedantic-errors")
+set(CMAKE_CXX_FLAGS "-fno-use-cxa-atexit -nostartfiles -nostdlib -Wall -Wextra -pedantic-errors")
 set(CRT0_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../DayOSLibraries/crt0/crt0.c)
 
 add_subdirectory(init)

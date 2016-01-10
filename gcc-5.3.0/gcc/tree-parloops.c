@@ -1978,7 +1978,7 @@ build_new_reduction (reduction_info_table_type *reduction_list,
 int
 set_reduc_phi_uids (reduction_info **slot, void *data ATTRIBUTE_UNUSED)
 {
-  struct reduction_info *const red = *slot;
+  struct reduction_info *const RED = *slot;
   gimple_set_uid (red->reduc_phi, red->reduc_version);
   return 1;
 }

@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <syscall.h>
 
-#define LOG(msg) printf("[ INIT ] %s\n", msg)
-#define LOG_STRING(msg, str) printf("[ INIT ] %s: %s\n", msg, str)
+#define LOG(msg) debug_printf("[ INIT ] %s\n", msg)
+#define LOG_STRING(msg, str) debug_printf("[ INIT ] %s: %s\n", msg, str)
 
 void execute_program(const char* path)
 {

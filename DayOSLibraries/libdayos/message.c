@@ -34,6 +34,8 @@ int receive_message_timeout(message_t* msg, pid_t who, uint32_t tries, uint32_t 
 	return MESSAGE_ERR_RECEIVE;
 }
 
+#include <dayos.h>
+
 #define RECEIVE(msg, pid) while(receive_message(&msg, pid) != MESSAGE_RECEIVED) sleep(1);
 int read_message_stream(void* data, size_t size, pid_t who)
 {
@@ -46,12 +48,12 @@ int read_message_stream(void* data, size_t size, pid_t who)
 	size_t received = 0;
 	while(received < size)
 	{
-		RECEIVE(msg, who);		
+		RECEIVE(msg, who);
 		if(msg.signal != SIGNAL_OK)
 			break;
 		
 		memcpy(data, msg.message, msg.size);
-		data += msg.size;
+		data = ((char*) data) +  msg.size;
 		received += msg.size;
 	}
 	
@@ -66,7 +68,7 @@ int write_message_stream(const char* data, size_t size, pid_t who)
 	size_t num_messages = (size_t)((float)size / MESSAGE_STRING_SIZE);
 	size_t remaining_bytes = size % MESSAGE_STRING_SIZE;
 	
-	// printf("%d %d\n", num_messages, remaining_bytes);
+	// debug_printf("%d %d\n", num_messages, remaining_bytes);
 	
 	msg.signal = SIGNAL_OK;
 	msg.size = size;

@@ -132,11 +132,13 @@ int main()
 	tlliAddFunction(context, "exit", exitTlli);
 	tlliAddFunction(context, "execute", tlli_execute);
 	
-	execute_script("/drives/roramdisk/lisp/boot.lisp", context);
+	//execute_script("/drives/roramdisk/lisp/boot.lisp", context);
 
 	// sleep(150);
-	printf("\nThe DayOS shell v0.1\n\n");
-	printf("Type 'help' for a list of available commands.\n\n");
+	//printf("\n\n\n");
+
+	printf("\x1B[31;47mThe DayOS shell v0.1\n\n");
+	printf("\x1B[34mType 'help' for a list of available commands.\n\n");
 
 	// FILE* in = fopen("/dayos/dev/tty", "r");
 	// stdin = in;
@@ -146,6 +148,7 @@ int main()
 	while (1)
 	{
 		printf("DayOS > ");
+		fflush(stdout);
 		read_line(stdin);
 
 		if (!useTlli)

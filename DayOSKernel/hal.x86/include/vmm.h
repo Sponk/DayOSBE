@@ -35,5 +35,6 @@ vmm_context_t* CreateUsermodeContext(int kernel_write);
 void activate_memory_context(vmm_context_t* context);
 void vmm_alloc(vmm_context_t* context, uintptr_t vaddr, uint32_t sz);
 void destroy_context(vmm_context_t* context);
+void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t userspace);
 
 #endif

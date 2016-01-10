@@ -9,4 +9,6 @@ rootsys
 dayoslibs-build
 packages
 kernel-build
-
+*.kdev4
+.kdev4
+.idea

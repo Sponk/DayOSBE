@@ -3,27 +3,24 @@
 #include <string.h>
 #include <syscall.h>
 
-FILE* stdin;
-FILE* stdout;
-
-void putch(int c)
+void debug_putch(int c)
 {
 	syscall1(1, c);
 }
 
-int putchar(int character)
+int debug_putchar(int character)
 {
-	putch(character);
+	debug_putch(character);
 	return character;
 }
 
-int puts(const char* s)
+int debug_puts(const char* s)
 {
 	int ret = 0;
 
 	while(*s)
 	{
-		putch(*s);
+		debug_putch(*s);
 		ret++;
 		s++;
 	}
@@ -31,7 +28,7 @@ int puts(const char* s)
 	return ret;
 }
 
-int putn(unsigned int x, int base)
+int debug_putn(unsigned int x, int base)
 {
 	char buf[65];
 	const char* digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -52,10 +49,10 @@ int putn(unsigned int x, int base)
 		x /= base;
 	} while(x);
 		
-	return puts(p);
+	return debug_puts(p);
 }
 
-int printf(const char* fmt, ...)
+int debug_printf(const char* fmt, ...)
 {
 	va_list ap;
 	const char* s;
@@ -72,22 +69,22 @@ int printf(const char* fmt, ...)
 			{
 				case 's':
 					s = va_arg(ap, const char*);
-					ret += puts(s);
+					ret += debug_puts(s);
 					break;
 				case 'c':
 					n = va_arg(ap, int);
-					putch(n);
+					debug_putch(n);
 					ret++;
 					break;
 				case 'd':
 				case 'u':
 					n = va_arg(ap, unsigned long int);
-					ret += putn(n, 10);
+					ret += debug_putn(n, 10);
 					break;
 				case 'x':
 				case 'p':
 					n = va_arg(ap, unsigned long int);
-					ret += putn(n, 16);
+					ret += debug_putn(n, 16);
 					break;
 				case 'l':
 					switch(fmt[1])
@@ -95,26 +92,26 @@ int printf(const char* fmt, ...)
 						case 'd':
 							fmt++;
 							n = va_arg(ap, long int);
-							ret += putn(n, 10);
-							break;							
+							ret += debug_putn(n, 10);
+							break;
 					}
 					break;
 				case '%':
-					putch('%');
+					debug_putch('%');
 					ret++;
 					break;
 				case '\0':
 					goto out;
 				default:
-					putch('%');
-					putch(*fmt);
+					debug_putch('%');
+					debug_putch(*fmt);
 					ret += 2;
 					break;
 			}
 		} 
 		else 
 		{
-			putch(*fmt);
+			debug_putch(*fmt);
 			ret++;
 		}
 		fmt++;
@@ -124,12 +121,6 @@ out:
 	va_end(ap);
 	return ret;
 }
-
-int vprintf(const char* fmt, va_list ap)
-{
-	printf("STUB: %s\n", __func__);
-}
-
 
 int sputn(char *s, int x, int base)
 {

@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <syscall.h>
 
 typedef void (*sig_func)(int);
 
@@ -44,17 +45,18 @@ void (*signal(int sig, void (*func)(int)))(int)
 	if(sig >= SIGNAL_TABLE_SIZE || sig < 0)
 	{
 		errno = EINVAL;
-		return SIG_ERR;
+		return (sig_func) SIG_ERR;
 	}
 	
-	if(func == SIG_DFL)
+	uintptr_t funcptr = (uintptr_t) func;
+	if(funcptr == SIG_DFL)
 	{
 		if(sig < DEFAULT_TABLE_SIZE)
 			signal_table[sig] = default_table[sig];
 		else
 			signal_table[sig] = sig_dfl;
 	}
-	else if(func == SIG_IGN)
+	else if(funcptr == SIG_IGN)
 	{
 		signal_table[sig] = NULL;
 	}
@@ -95,5 +97,5 @@ void init_signals()
 	signal(SIGBREAK, SIG_DFL);
 	signal(SIGABRT, SIG_DFL);
 	
-	syscall1(11, os_signal_handler);
+	syscall1(11, (uintptr_t) os_signal_handler);
 }

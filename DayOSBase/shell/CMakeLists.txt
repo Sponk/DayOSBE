@@ -9,3 +9,4 @@ ${CMAKE_CURRENT_SOURCE_DIR}/tlli-master/src/include)
 install(TARGETS shell.elf DESTINATION ${CMAKE_INSTALL_PREFIX}/image)
 
 target_link_libraries(shell.elf dayos m)
+include_directories(${LIBDAYOS_INCLUDE})

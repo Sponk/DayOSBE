@@ -7,7 +7,7 @@
 extern "C" void abort();
 
 enum numbers { one, two, three } __attribute__ ((packed)) nums;
-enum colours { red = 1000, green, blue } __attribute__ ((packed)) cols;
+enum colours { red = 1000, green, BLUE# } __attribute__ ((packed)) cols;
 enum conditions { fine, rain, cloudy } __attribute__ ((packed)) forecast;
 
 int

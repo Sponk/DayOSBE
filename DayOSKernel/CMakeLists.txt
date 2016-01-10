@@ -27,22 +27,20 @@ if(${ARCH} STREQUAL "x86")
 	file(GLOB_RECURSE ARCH_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/hal.x86/*.h)
 	file(GLOB_RECURSE ARCH_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/hal.x86/*.c*)
 	file(GLOB_RECURSE ARCH_ASM ${CMAKE_CURRENT_SOURCE_DIR}/hal.x86/*.asm)
-
 	
-	set(CMAKE_C_FLAGS "-m32 -Wall -nostartfiles -nostdlib -g -pedantic-errors")
-	set(CMAKE_CXX_FLAGS "-m32 -std=c++0x -fno-use-cxa-atexit -nostartfiles -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wall -Wextra -pedantic-errors")
+	set(CMAKE_C_FLAGS "-m32 -Wall -nostartfiles -nostdlib -g -pedantic-errors -nostdinc")
+	set(CMAKE_CXX_FLAGS "-m32 -std=c++0x -fno-use-cxa-atexit -nostartfiles -nostdlib -nostdinc -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wall -Wextra -pedantic-errors")
 
 	include_directories("include" "hal.x86/include" "sys")
 
-	set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf32")
-	
+	set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf32")	
 	add_definitions(-DDAYOS_SYSNAME="DayOS" -DDAYOS_ARCH="i686-pc-dayos" -DDAYOS_RELEASE="0.0.3" -DDAYOS_VERSION="1")
 endif()
 
 enable_language(ASM_NASM)
 add_executable(kernel ${SOURCES} ${ARCH_ASM} ${ARCH_SOURCES} ${HEADERS} ${ARCH_HEADERS})
 
-target_link_libraries(kernel ${CMAKE_INSTALL_PREFIX}/usr/lib/libdayos.a)
+target_link_libraries(kernel dayos)
 include_directories(${CMAKE_INSTALL_PREFIX}/usr/include)
 
 #set(CMAKE_CXX_LINK_EXECUTABLE "")

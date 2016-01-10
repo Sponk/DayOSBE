@@ -54,7 +54,7 @@ void kernel_process()
 		
 		// Get service PID
 		case 2: {
-				DebugPrintf("[ KERNEL ] Sending service info for service '%s' to %d\n", msg.message, msg.sender);
+				//DebugPrintf("[ KERNEL ] Sending service info for service '%s' to %d\n", msg.message, msg.sender);
 
 				service_t* service = service_start;
 				while(service != NULL)
@@ -68,7 +68,7 @@ void kernel_process()
 				
 				if(service != NULL)
 				{
-					DebugPrintf("[ KERNEL ] Found service with pid %d\n", service->pid);
+				//	DebugPrintf("[ KERNEL ] Found service with pid %d\n", service->pid);
 					
 					msg.signal = service->pid;
 					send_message(&msg, msg.sender);

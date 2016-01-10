@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <dayos.h>
 
 FileSystem::FileSystem() :
 root("/", VFS_MODE_RW)
@@ -132,7 +133,7 @@ bool FileSystem::addNode(const char* path, FSNode* node)
 	
 	if(!parent) // FIXME: Exception!
 	{
-		printf("[ VFS ] Node %s not found!\n", fullpath.c_str());
+		debug_printf("[ VFS ] Node %s not found!\n", fullpath.c_str());
 		return false;
 	}
 	

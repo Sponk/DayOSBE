@@ -8,6 +8,9 @@
 #include <driver.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <stdarg.h>
+
+#include <dayos.h>
 
 #define TIMEOUT 10
 
@@ -102,6 +105,7 @@ FILE* fopen(const char* filename, const char* mode)
 	f->native_file.offset = 0;
 	
 	f->buffer = NULL;
+	f->buffer_index = 0;
 
 	setvbuf(f, NULL, _IOLBF, 512);
 	return f;
@@ -149,25 +153,29 @@ int fputc(int character, FILE* stream)
 	{
 		case _IOFBF:
 			stream->buffer[stream->buffer_index] = character;
+			stream->buffer_index++;
+
 			if(stream->buffer_index >= stream->buffer_size - 1)
 			{
 				if(!fflush(stream)) return character;
 				return 0;
 			}
 			
-			stream->buffer_index++;
+			stream->buffer[stream->buffer_index] = 0;
 			return character;
 		break;
 			
 		case _IOLBF:
 			stream->buffer[stream->buffer_index] = character;
+			stream->buffer_index++;
+
 			if(stream->buffer_index >= stream->buffer_size - 1 || character == '\n')
 			{
 				if(!fflush(stream)) return character;
 				return 0;
 			}
 			
-			stream->buffer_index++;
+			stream->buffer[stream->buffer_index] = 0;
 			return character;
 		break;
 			
@@ -329,6 +337,9 @@ static int fputn(unsigned int x, int base, FILE* stream)
 
 int vfprintf(FILE* stream, const char* fmt, va_list ap)
 {
+	if(!stream || !fmt)
+		return 0;
+	
 	const char* s;
 	unsigned long n;
 	unsigned int ret = 0;
@@ -395,6 +406,31 @@ out:
 	return ret;
 }
 
+void putch(int c)
+{
+	fputc(c, stdout);
+}
+
+int puts(const char* str)
+{
+	return fputs(str, stdout);
+}
+
+int printf(const char* fmt, ...)
+{
+	va_list ap;
+	int ret = 0;
+	va_start(ap, fmt);
+	ret = vprintf(fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+int vprintf(const char* fmt, va_list ap)
+{
+	return vfprintf(stdout, fmt, ap);
+}
+
 int fflush(FILE* stream) 
 {
 	if(!stream) return EOF;
@@ -402,10 +438,14 @@ int fflush(FILE* stream)
 	int result = 0;
 	if(stream->mode == VFS_MODE_WO)
 	{
-		if(fwrite(stream->buffer, stream->buffer_size, 1, stream) != stream->buffer_size)
+		if(fwrite(stream->buffer, stream->buffer_index, 1, stream) != stream->buffer_index)
+		{
+			stream->buffer_index = 0;
 			return EOF;
+		}
 	}
 
+	stream->buffer[0] = 0;
 	stream->buffer_index = 0;
 	return 0;
 }
@@ -436,18 +476,18 @@ size_t fwrite(const void* ptr, size_t size, size_t count, FILE* stream)
 
 int fputs(const char* str, FILE* stream)
 {
-	/*if(!str || !stream)
+	if(!str || !stream)
 		return 0;
 
 	int i = 0;
-	while(*str)
+	while(str[i])
 	{
-		fputc(&str[i], stream);
+		fputc(str[i], stream);
 		i++;
 	}
-	return i;*/
+	return i;
 	
-	printf("File: 0x%x, buffer index: %d buffer size: %d path: %s\n", stream, stream->buffer_index, stream->buffer_size, stream->native_file.path);
+	//printf("File: 0x%x, buffer index: %d buffer size: %d path: %s\n", stream, stream->buffer_index, stream->buffer_size, stream->native_file.path);
 }
 
 char* fgets(char* str, int num, FILE* stream)
@@ -570,7 +610,7 @@ char* tmpnam(char* str)
 		return tmpnam_buf;
 	}
 
-	strncpy(tmpnam_buf, L_tmpnam, str);
+	strncpy(tmpnam_buf, str, L_tmpnam);
 	snprintf(str, L_tmpnam, "%s%d", tmpnam_buf, tmpnam_num);
 	return str;
 }

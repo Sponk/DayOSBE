@@ -23,9 +23,9 @@ typedef struct
 	char typeflag;
 }tar_header_t;
 
-tar_header_t** files;
-tar_header_t* first_file;
-uint32_t fileno = 0;
+static tar_header_t** files;
+static tar_header_t* first_file;
+static uint32_t fileno = 0;
 
 static uint32_t get_size(const char* in)
 {

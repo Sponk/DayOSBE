@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <dayos.h>
 #include <driver.h>
+#include <memory.h>
+#include "framebuffer.h"
 
 #define BUFFER_SIZE 512
 #define TRUE 1
@@ -111,15 +113,15 @@ void GetKeyboardInfo()
 	uint8_t c = inb(0x60);
 
 	if(c == 0xFA)
-		printf("[ TTY ] You have an AT keyboard (0x%x).\n", c);
+		debug_printf("[ TTY ] You have an AT keyboard (0x%x).\n", c);
 	else
-		printf("[ TTY ] You have an unknown keyboard (0x%x).\n", c);
+		debug_printf("[ TTY ] You have an unknown keyboard (0x%x).\n", c);
 }
 
 char* buffer;
 uint32_t len = 0;
 
-void UpdateBuffer(char c)
+void UpdateBuffer(char c, Framebuffer& fb)
 {
 
 	// if(c == '\b')
@@ -139,7 +141,7 @@ void UpdateBuffer(char c)
 	}
 
 	if (len > 0)
-		putch(c);
+		fb.putch(c);
 }
 
 void moveBufferLeft(char* s)
@@ -160,11 +162,10 @@ int main()
 
 	sleep(100);
 
-	int retval =
-		vfs_create_device("/dayos/dev/tty", VFS_MODE_RW, VFS_CHARACTER_DEVICE);
+	int retval = vfs_create_device("/dayos/dev/tty", VFS_MODE_RW, VFS_CHARACTER_DEVICE);
 	if (retval == SIGNAL_FAIL)
 	{
-		printf("[ TTY ] Could not create device file!\n");
+		debug_printf("[ TTY ] Could not create device file!\n");
 		while (1)
 			;
 		return -1;
@@ -178,6 +179,9 @@ int main()
 
 	uint8_t shifted;
 	char lastChar = 0;
+	
+	request_mem_region("VIDMEM", 0xB8000);
+	Framebuffer fb;
 	
 	struct vfs_request* rq = (struct vfs_request*) &msg.message;
 	while (1)
@@ -222,7 +226,7 @@ int main()
 							else
 								lastChar = kbdgermanshift[scancode];
 
-							UpdateBuffer(lastChar);
+							UpdateBuffer(lastChar, fb);
 
 							if (read_request)
 							{
@@ -263,10 +267,11 @@ int main()
 
 			case DEVICE_WRITE: {
 				
-				char* data = malloc(msg.size);
+				char* data = (char*) malloc(msg.size + 1);
 				read_message_stream(data, msg.size, msg.sender);
-
-				printf("%s", data);
+				
+				data[msg.size] = 0;
+				fb << data;
 
 				free(data);
 			}

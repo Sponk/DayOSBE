@@ -85,7 +85,7 @@ vmm_context_t* CreateUsermodeContext(int kernel_write)
 	return context;
 }
 
-static void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t userspace)
+void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t userspace)
 {
 	uint32_t pageIndex = virt / 0x1000;
 	uint32_t pdIndex = pageIndex / 1024;

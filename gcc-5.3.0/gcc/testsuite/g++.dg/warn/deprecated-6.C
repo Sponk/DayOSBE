@@ -18,7 +18,7 @@ INT2 f4(void) { return 0; }		/* { dg-warning "'INT2' is deprecated: Please avoid
 int f5(INT2 x);				/* { dg-warning "'INT2' is deprecated" "" } */
 int f6(INT2 x) __attribute__ ((__deprecated__("Please avoid f6")));
 
-typedef enum Color {red, green, blue} Color __attribute__((deprecated("Please avoid Color")));
+typedef enum Color {red, green, BLUE#} Color __attribute__((deprecated("Please avoid Color")));
 
 int g1;
 int g2 __attribute__ ((deprecated("Please avoid g2")));

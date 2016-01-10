@@ -13,7 +13,7 @@ int main()
 	int retval = vfs_create_device("/dayos/dev/ram", VFS_MODE_RW, VFS_BLOCK_DEVICE);
 	if (retval == SIGNAL_FAIL)
 	{
-		printf("[ RAM ] Could not create device!\n");
+		debug_printf("[ RAM ] Could not create device!\n");
 		return 1;
 	}
 	
@@ -21,8 +21,8 @@ int main()
 	struct vfs_request* rq = (struct vfs_request*) &msg.message;
 	char* data = (char*) malloc(DISK_SIZE);
 	
-	printf("[ RAM ] RW RAM disk at 0x%x\n", data);	
-	printf("[ RAM ] Started RAM disk device.\n");
+	debug_printf("[ RAM ] RW RAM disk at 0x%x\n", data);	
+	debug_printf("[ RAM ] Started RAM disk device.\n");
 	
 	while(1)
 	{
@@ -45,7 +45,7 @@ int main()
 			break;
 			
 			default:
-				printf("[ RAM ] Unknown signal %d from %d\n", msg.signal, msg.sender);
+				debug_printf("[ RAM ] Unknown signal %d from %d\n", msg.signal, msg.sender);
 		}
 	}
 
