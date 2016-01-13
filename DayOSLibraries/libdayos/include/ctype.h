@@ -1,7 +1,15 @@
 #ifndef CTYPE_H
 #define CTYPE_H
 
-int isspace(int x);
+#ifndef INLINE
+# if __GNUC__ && !__GNUC_STDC_INLINE__
+#  define INLINE extern inline
+# else
+#  define INLINE inline
+# endif
+#endif
+
+/*int isspace(int x);
 int isdigit(int x);
 int isxdigit(int x);
 int isalpha(int x);
@@ -15,7 +23,23 @@ int isgraph(int x);
 
 int isupper(int x);
 int islower(int x);
-int ispunct(int x);
+int ispunct(int x);*/
+
+INLINE int isspace(int x) { return (x == ' ' || x == '\t' || x == '\n' || x == '\v' || x == '\f' || x == '\r'); }
+INLINE int isdigit(int x) { return (x >= '0' && x <= '9'); }
+INLINE int isxdigit(int x) { return ((x >= 'A' && x <= 'F') && (x >= 'a' && x <= 'f') && (x >= '0' && x <= '9')); }
+INLINE int isalpha(int x) { return (x >= 'A' && x <= 'z'); }
+INLINE int toupper(int x) { return (x + 26); }
+INLINE int tolower(int x) { return (x - 26); }
+INLINE int isprint(int x) { return (x >= 0x1f || x == 0x7f); }
+INLINE int isalnum(int x) { return (isdigit(x) || isalpha(x)); }
+
+INLINE int iscntrl(int x) { return !isprint(x); }
+INLINE int isgraph(int x) { return (isprint(x) && x != ' '); }
+
+INLINE int isupper(int x) { return (x >= 'A' && x <= 'Z'); }
+INLINE int islower(int x) { return (x >= 'a' && x <= 'z'); }
+INLINE int ispunct(int x) { return (isgraph(x) && !isalnum(x)); }
 
 #define isspace(x)                                                             \
 	((x) == ' ' || (x) == '\t' || (x) == '\n' || (x) == '\v' || (x) == '\f' || \

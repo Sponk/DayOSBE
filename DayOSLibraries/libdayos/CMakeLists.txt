@@ -6,7 +6,8 @@ file(GLOB_RECURSE ASM_SOURCES *.S)
 
 enable_language(C ASM)
 
-set(CMAKE_C_FLAGS "-Wall -g -fstack-protector-all -nostdinc -nostdlib -pedantic-errors")
+set(CMAKE_C_FLAGS "-m32 -Wall -g -fstack-protector-all -nostdinc -nostdlib -pedantic-errors")
+set(CMAKE_ASM_FLAGS "-m32 -Wall -g -pedantic-errors")
 
 include_directories("include" ${DAYOS_KERNEL_INCLUDE})
 add_library(dayos STATIC ${SOURCES} ${ASM_SOURCES} ${HEADERS})

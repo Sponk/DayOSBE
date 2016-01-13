@@ -45,7 +45,7 @@ enum E1 {
 enum E2 {
   red,
 #pragma STDC FLOAT_CONST_DECIMAL64 ON	/* { dg-error "#pragma" } */
-  BLUE#
+  blue
 };
 
 enum E3 {

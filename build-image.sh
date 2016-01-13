@@ -1,6 +1,12 @@
 #!/bin/sh
+
+#if [ ! -d "disk.img" ]; then
+#	sh -e ./setup-disk.sh
+#fi
+
 rm ./ramdisk.tar
 
+mkdir -p rootsys/image/system
 cp build/image/kernel rootsys/
 cp build/image/uname rootsys/image
 cp build/image/*.elf rootsys/image
@@ -34,6 +40,7 @@ sudo cp scripts/grub/grub.cfg img/boot/grub2/grub.cfg
 sleep 1
 # Image aushängen.
 sudo umount img/
+sudo losetup -D
 
 rmdir img/
 sync

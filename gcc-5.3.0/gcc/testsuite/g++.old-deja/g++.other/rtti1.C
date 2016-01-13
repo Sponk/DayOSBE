@@ -30,7 +30,7 @@ const int ci = 100;
 int *pi;
 int ai[10];
 
-enum color { red, BLUE#, green, yellow};
+enum color { red, blue, green, yellow};
 
 int (*fp)();
 int (*gp)();

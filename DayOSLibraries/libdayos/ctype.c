@@ -1,4 +1,4 @@
-
+/*
 int isspace(int x) { return (x == ' ' || x == '\t' || x == '\n' || x == '\v' || x == '\f' || x == '\r'); }
 int isdigit(int x) { return (x >= '0' && x <= '9'); }
 int isxdigit(int x) { return ((x >= 'A' && x <= 'F') && (x >= 'a' && x <= 'f') && (x >= '0' && x <= '9')); }
@@ -13,4 +13,7 @@ int isgraph(int x) { return (isprint(x) && x != ' '); }
 
 int isupper(int x) { return (x >= 'A' && x <= 'Z'); }
 int islower(int x) { return (x >= 'a' && x <= 'z'); }
-int ispunct(int x) { return (isgraph(x) && !isalnum(x)); }
+int ispunct(int x) { return (isgraph(x) && !isalnum(x)); }*/
+
+#define INLINE
+#include <ctype.h>
