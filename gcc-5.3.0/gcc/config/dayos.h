@@ -1,7 +1,7 @@
 #undef TARGET_DAYOS
 #define TARGET_DAYOS 1
  
-#define LIB_SPEC "-ldayos -lm" // -lg" /* link against C standard libraries */
+#define LIB_SPEC "-lcrt0 -ldayos -lm" // -lg" /* link against C standard libraries */
                                /* modify this based on your needs */
  
 /* Don't automatically add extern "C" { } around header files. */
@@ -18,6 +18,33 @@
     builtin_assert ("system=unix");   \
     builtin_assert ("system=posix");   \
   } while(0);
+  
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "/usr/lib/crti.o"
+
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "/usr/lib/crtn.o"
+  
+  
+/*#ifdef HAVE_INITFINI_ARRAY_SUPPORT
+
+#define USE_INITFINI_ARRAY
+
+#undef INIT_SECTION_ASM_OP
+#undef FINI_SECTION_ASM_OP
+
+#undef INIT_ARRAY_SECTION_ASM_OP
+#define INIT_ARRAY_SECTION_ASM_OP
+
+#undef FINI_ARRAY_SECTION_ASM_OP
+#define FINI_ARRAY_SECTION_ASM_OP
+
+#undef TARGET_ASM_CONSTRUCTOR
+#define TARGET_ASM_CONSTRUCTOR default_elf_init_array_asm_out_constructor
+#undef TARGET_ASM_DESTRUCTOR
+#define TARGET_ASM_DESTRUCTOR default_elf_fini_array_asm_out_destructor
+
+#endif*/
   
 //#undef STANDARD_INCLUDE_DIR
 //#define STANDARD_INCLUDE_DIR "/include"

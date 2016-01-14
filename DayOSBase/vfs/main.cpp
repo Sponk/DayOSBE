@@ -9,6 +9,23 @@
 
 using namespace std;
 
+class clc
+{
+	public: 
+		clc()
+		{ 
+			debug_printf("CONSTRUCTOR!!!!!\n"); 
+			
+		}
+} obj;
+
+clc lala;
+
+__attribute__ ((constructor)) void foo(void)
+{
+	debug_printf("CONSTRUCTOR!!!!!\n"); 
+}
+
 int main(int argc, char* argv[])
 {
 	FileSystem rootfs;

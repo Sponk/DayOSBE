@@ -12,11 +12,17 @@ extern FILE* stdin;
 extern FILE* stdout;
 extern FILE* stderr;
 
+extern void _init();
+
 // TODO: Parameteruebergabe!
 void _start()
 {
 	setup_stack_chk();
 	init_libdayos();
+	
+	//printf("CTORS: 0x%x\n", __CTOR_LIST__);
+	
+	_init();
 		
 	pid_t vfs_service = get_service_pid("vfs");
 	// FIXME: Get from kernel somehow!
@@ -35,6 +41,11 @@ void _start()
 //	run_destructors();
 	
 	exit(retval);
+}
+
+void print_stuff()
+{
+	debug_printf("THIS IS DEBUG STUFF\n");
 }
 
 void* __stack_chk_guard = NULL;
