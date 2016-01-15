@@ -40,8 +40,11 @@ FILE* fopen(const char* filename, const char* mode)
 	pid_t pid = get_service_pid("vfs");
 
 	if (pid == 0)
+	{
+		errno = ENOENT;
 		return NULL;
-
+	}
+	
 	uint32_t intmode = 0;
 	while (*mode)
 	{
@@ -54,8 +57,11 @@ FILE* fopen(const char* filename, const char* mode)
 
 	FILE* f = malloc(sizeof(FILE));
 	if (!f)
+	{
+		errno = ENOMEM;
 		return NULL;
-
+	}
+	
 	f->mode = intmode;
 	request->magic = VFS_MAGIC;
 
@@ -68,12 +74,14 @@ FILE* fopen(const char* filename, const char* mode)
 	if (receive_message_timeout(&msg, pid, 100, 5) == MESSAGE_ERR_RECEIVE)
 	{
 		free(f);
+		errno = ENOENT;
 		return NULL;
 	}
 
 	if (msg.signal == SIGNAL_FAIL)
 	{
 		free(f);
+		errno = ENOENT;
 		return NULL;
 	}
 
@@ -90,8 +98,9 @@ FILE* fopen(const char* filename, const char* mode)
 
 		if (receive_message_timeout(&mountmsg, vfile->device, 100, 5) ==
 				MESSAGE_ERR_RECEIVE ||
-			mountmsg.signal != SIGNAL_OK)
+				mountmsg.signal != SIGNAL_OK)
 		{
+			errno = ENOENT;
 			free(f);
 			return NULL;
 		}
@@ -109,6 +118,7 @@ FILE* fopen(const char* filename, const char* mode)
 	f->buffer_content_size = 0;
 
 	setvbuf(f, NULL, _IOLBF, 512);
+	errno = 0;
 	return f;
 }
 
@@ -589,7 +599,8 @@ int putc(int c, FILE* stream)
 
 void perror(const char* str)
 {
-	fprintf(stderr, "%s:%s\n", strerror(errno), str);
+	if(errno)
+		fprintf(stderr, "%s: %s\n", str, strerror(errno));
 }
 
 int remove(const char* filename)

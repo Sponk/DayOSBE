@@ -7,34 +7,9 @@
 #define LOG(msg) debug_printf("[ INIT ] %s\n", msg)
 #define LOG_STRING(msg, str) debug_printf("[ INIT ] %s: %s\n", msg, str)
 
-void execute_program(const char* path)
-{
-	FILE* exec = fopen(path, "r");
-	
-	if(!exec)
-	{
-		LOG_STRING("Could not open executable", path);
-		return;
-	}
-	
-	char* content;
-	fseek(exec, 0, SEEK_END);
-	size_t sz = ftell(exec);
-	fseek(exec, 0, SEEK_SET);
-
-	content = (char*) malloc(sz);
-	fread(content, sz, 1, exec);
-	
-	syscall1(9, (uintptr_t) content);
-	
-	fclose(exec);
-	free(content);
-}
-
 void execute_config(const char* path)
 {
 	FILE* config = fopen(path, "r");
-	
 	if(!config)
 	{
 		LOG("Could not open config file!");
@@ -60,7 +35,7 @@ void execute_config(const char* path)
 		else if(strcmp(p, ""))
 		{
 			LOG(p);
-			execute_program(p);
+			execute_program(p, 0, NULL);
 		}
 		
 		p = strtok(NULL, "\n");

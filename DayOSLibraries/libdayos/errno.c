@@ -1,11 +1,46 @@
 #include <errno.h>
 
-#define MESSAGES 4
+#define MESSAGES 40
 char* messages[MESSAGES] = {
-	"No error!",
-	"Out of domain error!",
-	"Out of range error!",
-	"Illegal byte sequence!"
+	"No error",
+	"Out of domain error",
+	"Out of range error",
+	"Illegal byte sequence",
+	"",
+	"",
+	"",
+	"",
+	"No such file or directory",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",	
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	""
 };
 
 int errno = 0;

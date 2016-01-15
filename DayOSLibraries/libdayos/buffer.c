@@ -8,7 +8,6 @@
 static void default_flush(day_buffer_t* buffer)
 {
 	debug_printf("Flushing buffer: sz = %d content_size = %d memory = %s csr = %d\n", buffer->size, buffer->content_size, buffer->memory, buffer->cursor);
-	int i = 12 / 0;
 }
 
 day_buffer_t* construct_day_buffer(size_t size, void (*flush)(day_buffer_t* buffer), DAYBUFFER_FLUSHMODE mode)

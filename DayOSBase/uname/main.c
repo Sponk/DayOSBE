@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <sys/utsname.h>
 
-int main()
+int main(int argc, char* argv[])
 {
 	struct utsname name;
 	uname(&name);

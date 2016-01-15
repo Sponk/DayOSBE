@@ -68,12 +68,13 @@
 #define EOPNOTSUPP 65
 #define ETIMEDOUT 66
 
-
-extern int errno;
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+extern int errno;
+
+	
 #ifdef __cplusplus
 }
 #endif

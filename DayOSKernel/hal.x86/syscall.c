@@ -132,7 +132,7 @@ struct cpu* Syscall(struct cpu* cpu_old)
 			break;
 		}
 		
-		CreateUserProcess(entry, context);
+		cpu_old->eax = CreateUserProcess(entry, context)->pid;
 	}
 	break;
 	

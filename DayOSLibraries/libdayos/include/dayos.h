@@ -14,6 +14,7 @@ extern "C" {
 
 int debug_printf(const char* fmt, ...);
 void debug_putch(int c);
+int execute_program(const char* path, int argc, char* argv[]);
 
 #ifdef __cplusplus
 }

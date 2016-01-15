@@ -30,7 +30,7 @@ void read_line(FILE* stream)
 	*s = '\0';
 }
 
-int execute_program(const char* path)
+/*int execute_program(const char* path)
 {
 	FILE* exec = fopen(path, "r");
 	
@@ -54,7 +54,7 @@ int execute_program(const char* path)
 	free(content);
 	
 	return 0;
-}
+}*/
 
 int useTlli = 0;
 
@@ -73,7 +73,7 @@ tlliValue* tlli_execute(int i, tlliValue** val)
 	char* buf = malloc(512);
 	
 	tlliValueToString(val[0], &buf, 512);
-	tlliIntToValue(execute_program(buf), &rtn);
+	tlliIntToValue(execute_program(buf, 0, NULL), &rtn);
 	
 	free(buf);
 	return rtn;
@@ -128,6 +128,30 @@ void execute_script(const char* path, tlliContext* context)
 	free(content);
 }
 
+void  parse(char *line, char** argv)
+{
+	while(*line != '\0')
+	{       
+		while (*line == ' ' || *line == '\t' || *line == '\n' || *line=='|')
+			*line++ = '\0';     
+		
+		*argv++ = line;         
+		while (*line != '\0' && *line != ' ' && *line != '\t' && *line != '\n') 
+		
+		line++;
+	}
+	*argv = '\0';               
+}
+
+int count_args(char** argv)
+{
+	int i = 0;
+	while(*(argv++))
+		i++;
+	
+	return i;
+}
+
 int main()
 {
 	tlliValue* retval = NULL;
@@ -148,7 +172,8 @@ int main()
 	// stdin = in;
 
 	char* outputBuffer = malloc(512);
-
+	char** argv = malloc(sizeof(char*) * 512);
+	
 	while (1)
 	{
 		printf("DayOS > ");
@@ -156,6 +181,7 @@ int main()
 		
 		//read_line(stdin);
 		fgets(buffer, 512, stdin);
+		parse(buffer, argv);
 		
 		//printf("Got input: %s\n", buffer);
 		//continue;
@@ -165,7 +191,8 @@ int main()
 			char program[256];
 			snprintf(program, sizeof(program), "%s/%s", "/drives/roramdisk", buffer);
 			
-			if(!execute_program(program))
+			// First entry is the program name, but that'll be supplied by the full path
+			if(!execute_program(program, count_args(argv) - 1, argv + 1))
 			{
 				
 			}

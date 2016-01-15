@@ -163,4 +163,17 @@ is being created. Otherwise the application receives a SIGNAL\_FAIL message.
 When an application is started it gets an environment and command line arguments passed to it.
 This chapter is used to specify how this is done on the side of the runtime library. This features does
 not need the kernel in principle given that parent process and child process use the same
-functions to transmit the needed data.
+functions to transmit the needed data. \\ \\
+The protocol is very simple:
+\begin{enumerate}
+ \item A message with signal = SIGNAL\_OK and size = argc to begin transmission.
+ \item A message with signal = SIGNAL\_OK and message = argv[iteration]
+ \item If still any argument is left, go to step 1, else continue.
+ \item A message with signal SIGNAL\_OK and message = variable name
+ \item A message with signal SIGNAL\_OK and message = variable value
+ \item If still any environment variable is left, go to step 4, else continue.
+ \item A message with signal SIGNAL\_OK and size = 0 to end transmission.
+\end{enumerate}
+Keep in mind that the size field of the message always needs to be greater than 0 or else the transmission will terminate.
+It should be enough to set it to argc since at least one argument needs to be sent anyways.
+
