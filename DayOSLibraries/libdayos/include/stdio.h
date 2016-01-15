@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <vfs.h>
+#include <buffer.h>
 #include <sys/stat.h>
 
 typedef struct
@@ -16,6 +17,9 @@ typedef struct
 	uint32_t buffer_mode;
 	size_t buffer_size;
 	size_t buffer_index;
+	size_t buffer_content_size;
+	
+	int buffer_empty;
 	char* buffer;
 }FILE;
 

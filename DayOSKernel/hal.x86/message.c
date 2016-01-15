@@ -196,7 +196,6 @@ int kreceive_message(process_t* current_process, message_t* msg, uint32_t who)
 		}
 	}
 	
-	// DebugPrintf("Receiving message: 0x%x and 0x%x\n", msg, &node->message);
 	copy_message(msg, &node->message);	
 	kfree(node);
 	current_process->messages.num_messages--;

@@ -40,11 +40,11 @@ int receive_message_timeout(message_t* msg, pid_t who, uint32_t tries, uint32_t 
 int read_message_stream(void* data, size_t size, pid_t who)
 {
 	message_t msg;
-	
+
 	// Get prolog
 	RECEIVE(msg, who);
 	if(msg.signal != SIGNAL_OK) return 0;
-	
+
 	size_t received = 0;
 	while(received < size)
 	{
@@ -67,9 +67,7 @@ int write_message_stream(const char* data, size_t size, pid_t who)
 	message_t msg;
 	size_t num_messages = (size_t)((float)size / MESSAGE_STRING_SIZE);
 	size_t remaining_bytes = size % MESSAGE_STRING_SIZE;
-	
-	// debug_printf("%d %d\n", num_messages, remaining_bytes);
-	
+
 	msg.signal = SIGNAL_OK;
 	msg.size = size;
 	send_message(&msg, who);

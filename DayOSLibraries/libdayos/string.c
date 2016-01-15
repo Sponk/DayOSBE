@@ -39,8 +39,7 @@ char *strcat(char *str1, const char *str2)
 char *strchr(const char *str, int chr)
 {
 	size_t i;
-	for (i = 0; (str[i] != 0 && str[i] != (char)chr); i++)
-		;
+	for (i = 0; (str[i] != 0 && str[i] != (char) chr); i++);
 	return str[i] == chr ? ((char *)str + i) : NULL;
 }
 

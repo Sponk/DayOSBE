@@ -10,7 +10,7 @@ void read_line(FILE* stream)
 {
 	char c;
 	char* s = buffer;
-	while ((c = fgetc(stream)) != '\n' && c != 0 &&
+	while ((c = fgetc(stream)) != '\n' && c != EOF &&
 		   s < (&buffer + sizeof(buffer)))
 	{
 		if (c == '\b' && s > buffer)
@@ -36,6 +36,7 @@ int execute_program(const char* path)
 	
 	if(!exec)
 	{
+		// printf("Could not find program %s!\n", path);
 		return 1;
 	}
 	
@@ -69,9 +70,12 @@ tlliValue* exitTlli(int i, tlliValue** val)
 tlliValue* tlli_execute(int i, tlliValue** val)
 {
 	tlliValue* rtn;
-	char buf[512];
+	char* buf = malloc(512);
+	
 	tlliValueToString(val[0], &buf, 512);
 	tlliIntToValue(execute_program(buf), &rtn);
+	
+	free(buf);
 	return rtn;
 }
 
@@ -133,12 +137,12 @@ int main()
 	tlliAddFunction(context, "execute", tlli_execute);
 	
 	//execute_script("/drives/roramdisk/lisp/boot.lisp", context);
-
-	// sleep(150);
+	
+	//sleep(150);
 	//printf("\n\n\n");
 
-	printf("\x1B[31;47mThe DayOS shell v0.1\n\n");
-	printf("\x1B[34mType 'help' for a list of available commands.\n\n");
+	printf("The DayOS shell v0.1\n\n");
+	printf("Type 'help' for a list of available commands.\n\n");
 
 	// FILE* in = fopen("/dayos/dev/tty", "r");
 	// stdin = in;
@@ -149,8 +153,13 @@ int main()
 	{
 		printf("DayOS > ");
 		fflush(stdout);
-		read_line(stdin);
-
+		
+		//read_line(stdin);
+		fgets(buffer, 512, stdin);
+		
+		//printf("Got input: %s\n", buffer);
+		//continue;
+		
 		if (!useTlli)
 		{
 			char program[256];

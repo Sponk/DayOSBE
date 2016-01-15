@@ -6,6 +6,7 @@
 #include "interrupts.h"
 #include "vfs.h"
 #include "sleep.h"
+#include "buffer.h"
 
 #ifdef __cplusplus
 extern "C" {

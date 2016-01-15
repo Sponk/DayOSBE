@@ -12,6 +12,8 @@ cp build/image/uname rootsys/image
 cp build/image/*.elf rootsys/image
 cp build/image/*.drv rootsys/image/system
 
+cp -r DayOSBase/shell/lisp/ rootsys/image
+
 # Ramdisk bauen
 cp init.cfg rootsys/image
 cd rootsys/image

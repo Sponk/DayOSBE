@@ -10,6 +10,8 @@
 #define TRUE 1
 #define FALSE 0
 
+#define MIN(x, y) (x < y ? x : y)
+
 unsigned char kbdgerman[128] = {
 	'0',  '0', '1', '2', '3',  '4',  '5', '6', '7',  '8',
 	'9',  '0', '-', '=', '\b', '\t',					  /* Tab */
@@ -142,16 +144,19 @@ void UpdateBuffer(char c, Framebuffer& fb)
 
 	if (len > 0)
 		fb.putch(c);
+	
+	buffer[len] = 0;
 }
 
-void moveBufferLeft(char* s)
+void moveBufferLeft(char* s, size_t amount = 1)
 {
-	for (int i = 0; i < len - 1; i++)
+	for (int i = 0; i < len - amount; i++)
 	{
-		buffer[i] = buffer[i + 1];
+		buffer[i] = buffer[i + amount];
 	}
 
-	len--;
+	len -= amount;
+	buffer[len] = 0;
 }
 
 int main()
@@ -183,7 +188,10 @@ int main()
 	request_mem_region("VIDMEM", 0xB8000);
 	Framebuffer fb;
 	
+	day_buffer_t* input = construct_day_buffer(512, 0, FLUSH_FULL);
+	
 	struct vfs_request* rq = (struct vfs_request*) &msg.message;
+	struct vfs_request current_request;
 	while (1)
 	{
 		msg.signal = 0;
@@ -226,18 +234,61 @@ int main()
 							else
 								lastChar = kbdgermanshift[scancode];
 
-							UpdateBuffer(lastChar, fb);
+							if(lastChar == '\b')
+							{
+								if(input->content_size > 0)
+								{
+									input->memory[input->cursor] = 0;
+									
+									input->cursor--;
+									input->content_size--;
+								}
+							}
+							else
+								day_buffer_putchar(input, lastChar);
+							
+							fb.putch(lastChar);
+							//UpdateBuffer(lastChar, fb);
 
 							if (read_request)
 							{
-								msg.message[0] = lastChar;
-								msg.signal = SIGNAL_OK;
-								send_message(&msg, read_request);
-
-								if (lastChar != '\b')
-									moveBufferLeft(buffer);
-
-								read_request = 0;
+								switch(current_request.param)
+								{
+									case _IOFBF:
+										if(input->content_size >= current_request.size)
+										{
+											write_message_stream(input->memory, current_request.size, read_request);
+											input->cursor -= current_request.size;
+											input->content_size -= current_request.size;
+											//moveBufferLeft(buffer, current_request.size);
+											read_request = 0;
+										}
+									break;
+									
+									case _IOLBF:
+									{
+										if(lastChar == '\n' || input->content_size >= current_request.size)
+										{
+											size_t sz = MIN(input->content_size, current_request.size);
+											size_t sent = write_message_stream(input->memory, sz, read_request);
+											
+											//debug_printf("contentsize: %d reqsize: %d\n", input->content_size, current_request.size);
+											//debug_printf("Sending: sz %d sent %d %s\n", sz, sent, input->memory);
+											
+											// Tell the client that the stream is over regardless of its expectations
+											// regarding size
+											msg.signal = SIGNAL_FAIL;
+											send_message(&msg, read_request);
+											
+											input->cursor -= sz;
+											input->content_size -= sz;
+											input->memory[0] = 0;
+											
+											read_request = 0;
+										}
+									}
+									break;
+								}
 							}
 					}
 				}
@@ -245,6 +296,7 @@ int main()
 			break;
 
 			case DEVICE_READ:
+				
 				if (read_request != 0 && msg.sender != read_request)
 				{
 					msg.signal = SIGNAL_FAIL;
@@ -252,17 +304,55 @@ int main()
 					break;
 				}
 
-				if (len == 0)
+				/*moveBufferLeft(buffer);
+				msg.signal = SIGNAL_OK;
+				send_message(&msg, msg.sender);*/
+				
+				switch(rq->param)
 				{
-					read_request = msg.sender;
+					case _IOFBF:
+						if(input->content_size <= rq->size)
+						{
+							read_request = msg.sender;
+							current_request = *rq;
+							current_request.size = msg.size;
+							break;
+						}
+						else
+						{
+							write_message_stream(input->memory, rq->size, msg.sender);
+							//moveBufferLeft(buffer, rq->size);
+							input->cursor -= msg.size;
+						}
+					break;
+					
+					case _IOLBF:
+					{
+						char* newline = strchr(input->memory, '\n');
+						if(newline == NULL)
+						{
+							read_request = msg.sender;
+							current_request = *rq;
+							current_request.size = msg.size;
+						}
+						else
+						{
+							size_t size = MIN(newline - input->memory, msg.size);
+							write_message_stream(input->memory, size, msg.sender);
+							
+							// Tell the client that the stream is over regardless of its expectations
+							// regarding size
+							msg.signal = SIGNAL_FAIL;
+							send_message(&msg, read_request);
+							
+							// moveBufferLeft(buffer, size);
+							input->cursor -= size;
+							input->content_size -= size;
+						}
+					}
 					break;
 				}
-
-				msg.message[0] = buffer[0];
-
-				moveBufferLeft(buffer);
-				msg.signal = SIGNAL_OK;
-				send_message(&msg, msg.sender);
+				
 				break;
 
 			case DEVICE_WRITE: {

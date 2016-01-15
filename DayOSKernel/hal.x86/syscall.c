@@ -106,7 +106,8 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	
 	// set_timer
 	case 8:
-		// DebugPrintf("Setting timer for process %d to %d\n", current_process->pid, cpu_old->ebx);
+		// DebugPrintf("Setting timer for process %d to %d\n", current_process->pid, getTickCount() + cpu_old->ebx);
+		
 		current_process->sleep_timer = getTickCount() + cpu_old->ebx;
 		current_process->status = PROCESS_SLEEPING;
 		cpu_old = Schedule(cpu_old);

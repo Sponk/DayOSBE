@@ -106,6 +106,7 @@ FILE* fopen(const char* filename, const char* mode)
 	
 	f->buffer = NULL;
 	f->buffer_index = 0;
+	f->buffer_content_size = 0;
 
 	setvbuf(f, NULL, _IOLBF, 512);
 	return f;
@@ -153,6 +154,7 @@ int fputc(int character, FILE* stream)
 	{
 		case _IOFBF:
 			stream->buffer[stream->buffer_index] = character;
+			stream->buffer_content_size++;
 			stream->buffer_index++;
 
 			if(stream->buffer_index >= stream->buffer_size - 1)
@@ -168,6 +170,7 @@ int fputc(int character, FILE* stream)
 		case _IOLBF:
 			stream->buffer[stream->buffer_index] = character;
 			stream->buffer_index++;
+			stream->buffer_content_size++;
 
 			if(stream->buffer_index >= stream->buffer_size - 1 || character == '\n')
 			{
@@ -187,38 +190,65 @@ int fputc(int character, FILE* stream)
 	}
 }
 
+static void reverse_memory(char* begin, char* end)
+{
+	if(!begin || !end)
+		return;
+	
+	if(begin > end)
+	{
+		char* tmp = begin;
+		begin = end;
+		end = tmp;
+	}
+	
+	while(begin < end)
+	{
+		char tmp = *begin;
+		*begin = *end;
+		*end = tmp;
+		
+		begin++;
+		end--;
+	}
+}
+
 int fgetc(FILE* stream)
 {
-	if (!stream)
+	if(!stream)
 		return 0;
-
-	if (stream->ungetc_data)
+	
+	int character = EOF;
+	switch(stream->buffer_mode)
 	{
-		stream->ungetc_data = 0;
-		stream->native_file.offset++;
-		return stream->ungetc_data;
+		case _IOLBF:
+		case _IOFBF:
+			// Flush!
+			if(stream->buffer_content_size == 0)
+			{
+				stream->buffer_content_size = fread(stream->buffer, stream->buffer_size-1, 1, stream);
+				stream->buffer_index = stream->buffer_content_size - 1;
+				reverse_memory(stream->buffer, stream->buffer + stream->buffer_index);
+			}
+			
+			//debug_printf("Got line: cs = %d idx = %d %s\n", stream->buffer_content_size, stream->buffer_index, stream->buffer);
+			//debug_printf("stream->buffer[%d] == %c\n", stream->buffer_index, stream->buffer[stream->buffer_index]);
+
+			if(stream->buffer_content_size > 0)
+			{
+				character = stream->buffer[stream->buffer_index];
+				stream->buffer[stream->buffer_index--] = 0;
+				stream->buffer_content_size--;
+			}
+			
+			return character;
+		
+		case _IONBF:
+			if(fread(&character, 1, 1, stream))
+				return character;
+			
+			return EOF;
 	}
-
-	message_t msg;
-	struct vfs_request* rq = (struct vfs_request*)&msg.message;
-	msg.size = 1;
-
-	if (stream->native_file.type == VFS_MOUNTPOINT)
-		msg.signal = FS_SIGNAL_READ;
-	else
-		msg.signal = DEVICE_READ;
-
-	rq->offset = stream->native_file.offset;
-
-	strcpy(rq->path, stream->native_file.path);
-	send_message(&msg, stream->native_file.device);
-
-	while (receive_message(&msg, stream->native_file.device) !=
-		   MESSAGE_RECEIVED)
-		sleep(1);
-	stream->native_file.offset++;
-
-	return msg.message[0];
 }
 
 int getc(FILE* stream) { return fgetc(stream); }
@@ -240,7 +270,7 @@ size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream)
 		return 0;
 
 	message_t msg;
-	struct vfs_request* rq = (struct vfs_request*)&msg.message;
+	struct vfs_request* rq = (struct vfs_request*) &msg.message;
 
 	if (stream->native_file.type == VFS_MOUNTPOINT)
 		msg.signal = FS_SIGNAL_READ;
@@ -249,6 +279,7 @@ size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream)
 
 	msg.size = size * nmemb;
 
+	rq->param = stream->buffer_mode;
 	rq->offset = stream->native_file.offset;
 	strcpy(rq->path, stream->native_file.path);
 	send_message(&msg, stream->native_file.device);
@@ -411,17 +442,23 @@ void putch(int c)
 	fputc(c, stdout);
 }
 
+int putchar(int c)
+{
+	return fputc(c, stdout);
+}
+
 int puts(const char* str)
 {
-	return fputs(str, stdout);
+	if(fputs(str, stdout) == EOF) return EOF;
+	if(fputc('\n', stdout) == EOF) return EOF;
+	return 1;
 }
 
 int printf(const char* fmt, ...)
 {
 	va_list ap;
-	int ret = 0;
 	va_start(ap, fmt);
-	ret = vprintf(fmt, ap);
+	int ret = vprintf(fmt, ap);
 	va_end(ap);
 	return ret;
 }
@@ -441,12 +478,14 @@ int fflush(FILE* stream)
 		if(fwrite(stream->buffer, stream->buffer_index, 1, stream) != stream->buffer_index)
 		{
 			stream->buffer_index = 0;
+			stream->buffer_empty = 1;
 			return EOF;
 		}
 	}
 
 	stream->buffer[0] = 0;
 	stream->buffer_index = 0;
+	stream->buffer_empty = 1;
 	return 0;
 }
 
@@ -479,27 +518,25 @@ int fputs(const char* str, FILE* stream)
 	if(!str || !stream)
 		return 0;
 
-	int i = 0;
-	while(str[i])
+	while(*str)
 	{
-		fputc(str[i], stream);
-		i++;
+		if(fputc(*str++, stream) == EOF) return EOF;
 	}
-	return i;
 	
-	//printf("File: 0x%x, buffer index: %d buffer size: %d path: %s\n", stream, stream->buffer_index, stream->buffer_size, stream->native_file.path);
+	return 0;
 }
 
 char* fgets(char* str, int num, FILE* stream)
 {
 	if (!str || !num || !stream)
 		return NULL;
-	for (int i = 0; i < num - 1; i++)
+	
+	for(int i = 0; i < num; i++)
 	{
 		str[i] = fgetc(stream);
-		if (str[i] == '\n')
+		if (str[i] == '\n' || str[i] == 0)
 		{
-			str[i + 1] = '\0';
+			str[i] = '\0';
 			return str;
 		}
 	}
