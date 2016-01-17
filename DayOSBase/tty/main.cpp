@@ -121,50 +121,10 @@ void GetKeyboardInfo()
 		debug_printf("[ TTY ] You have an unknown keyboard (0x%x).\n", c);
 }
 
-char* buffer;
-uint32_t len = 0;
-
-void UpdateBuffer(char c, Framebuffer& fb)
-{
-
-	// if(c == '\b')
-	//{
-	// putch('\b');//printf("BACK\n");
-	//}
-
-	if (c == '\b' && len > 0)
-	{
-		len--;
-	}
-
-	if (len < BUFFER_SIZE && c != '\b')
-	{
-		buffer[len] = c;
-		len++;
-	}
-
-	if (len > 0)
-		fb.putch(c);
-	
-	buffer[len] = 0;
-}
-
-void moveBufferLeft(char* s, size_t amount = 1)
-{
-	for (int i = 0; i < len - amount; i++)
-	{
-		buffer[i] = buffer[i + amount];
-	}
-
-	len -= amount;
-	buffer[len] = 0;
-}
-
 int main()
 {
 	pid_t read_request = 0;
 	message_t msg;
-	buffer = (char*)malloc(BUFFER_SIZE);
 
 	sleep(100);
 

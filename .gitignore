@@ -13,3 +13,4 @@ kernel-build
 .kdev4
 .idea
 img
+documentation/doxygen
