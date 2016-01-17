@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include "tlli-master/include/tlli.h"
 
 char buffer[512];
@@ -202,6 +203,21 @@ int main()
 			else if (!strcmp("exit", buffer))
 			{
 				return 0;
+			}
+			else if(!strcmp("fcntl", buffer))
+			{
+			
+				printf("Testing fcntl file open -> write -> close.\n");
+				int fd = open("/dayos/dev/tty", O_WRONLY);
+				if(fd == -1)
+					{
+						perror("Could not open '/dayos/dev/tty'");
+						break;
+					}
+
+				write(fd, "HELLO WORLD\n", strlen("HELLO WORLD\n"));
+				close(fd);
+				
 			}
 			else if (!strcmp("raise", buffer))
 			{
