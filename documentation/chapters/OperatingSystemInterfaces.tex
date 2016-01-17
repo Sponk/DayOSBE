@@ -177,3 +177,30 @@ The protocol is very simple:
 Keep in mind that the size field of the message always needs to be greater than 0 or else the transmission will terminate.
 It should be enough to set it to argc since at least one argument needs to be sent anyways.
 
+\subsection{I/O Control}
+Since device drivers might have settings not covered by the usual file operations (open/close read/write etc.).
+These are available by using ioctl's similar to the system on Linux or many UNIX systems. \\
+The interface on DayOS has some restrictions on how arguments are transmitted.
+First of all, data can only flow from the user process to a device driver, not the other way around.
+Second of all, the first extended parameter needs to be a number
+and any other parameter needs to be a string. That means that the C function should be called
+like in the following example:
+\begin{verbatim}
+int ioctl(int fildes, int request, ... /* args */);
+
+/* ... */
+
+ioctl(fd, SOME_REQUEST, 123, "This is another string", "A third parameter");
+\end{verbatim}
+Pointers are \bf{NOT} permitted since transmission of data happens through messages
+from one process to another. Transmitting a pointer would only lead to problems regarding
+the size of the data to be copied and thus all parameters have to be encoded as strings.
+The interface is very similar to the way program arguments are transmitted.
+The overall process goes like this:
+\begin{enumerate}
+ \item A message withi signal DEVICE\_IOCTL and size = ioctl number
+ \item A message with signal = SIGNAL\_OK and size = first optional argument to begin transmission.
+ \item A message with signal = SIGNAL\_OK and message = argv[iteration]
+ \item If still any argument is left, go to step 3, else continue.
+ \item A message with signal SIGNAL\_OK and size = 0 to end transmission.
+\end{enumerate}
