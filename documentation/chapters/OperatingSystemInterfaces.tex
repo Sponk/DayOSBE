@@ -73,8 +73,7 @@ the abstract interface dictated by this design to be able to handle all requests
 be sent. When a driver starts and finishes his initialisation routine a device file has to be
 created. This procedure is described in the section \ref{create_device} about the VFS. \\ \\
 In the most general terms a driver has to respond to at least three different signals:
-DEVICE\_READ, DEVICE\_WRITE and DEVICE\_INFO. Those however have to be handled differently
-for different types of device.
+DEVICE\_READ, DEVICE\_WRITE and DEVICE\_IOCTL. Those however have to be handled differently for different types of device.
 
 \subsection{Data Interchange Structures}
 The following structures are used to transfer data between drivers and applications.
@@ -95,7 +94,8 @@ typedef enum
 typedef enum
 {
 	DEVICE_READ = 0x1,
-	DEVICE_WRITE = 0x2
+	DEVICE_WRITE = 0x2,
+    DEVICE_IOCTL = 0x3
 } DEVICE_ACTIONS;
 
 struct device_request
@@ -190,7 +190,8 @@ int ioctl(int fildes, int request, ... /* args */);
 
 /* ... */
 
-ioctl(fd, SOME_REQUEST, 123, "This is another string", "A third parameter");
+/* fd, request, number of optional args, optional args */
+ioctl(fd, SOME_REQUEST, 2, "This is another string", "A third parameter");
 \end{verbatim}
 Pointers are \bf{NOT} permitted since transmission of data happens through messages
 from one process to another. Transmitting a pointer would only lead to problems regarding

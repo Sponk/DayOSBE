@@ -4,6 +4,7 @@
 #include <dayos.h>
 #include <driver.h>
 #include <memory.h>
+#include <sys/ioctl.h>
 #include "framebuffer.h"
 
 #define BUFFER_SIZE 512
@@ -366,9 +367,21 @@ int main()
 				free(data);
 			}
 			break;
+
+		    case DEVICE_IOCTL: {
+				pid_t who = msg.sender;
+				int what = msg.size;
+				char** argv = ioctl_handle(who);
+
+				debug_printf("[ TTY ] Received an IOCTL command 0x%x\n", what);
+				ioctl_free(argv);
+
+				msg.signal = 0;
+				send_message(&msg, who);
+			}
+			break;
 		}
 	}
 
-	for (;;)
-		;
+	for (;;);
 }

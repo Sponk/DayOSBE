@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dayos.h>
 
 static const int vector_alloc_step = 16; 
 static int vector_size = 0;
@@ -83,4 +84,10 @@ int fsync(int fd)
 int fdatasync(int fd)
 {
 	fsync(fd);
+}
+
+// TODO: Public interface?
+FILE* fd2file(int fd)
+{
+	return vector_array[fd];
 }

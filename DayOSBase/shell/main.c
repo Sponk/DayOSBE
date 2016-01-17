@@ -204,6 +204,23 @@ int main()
 			{
 				return 0;
 			}
+			else if(!strcmp("ioctl", buffer))
+			{
+			
+				printf("Testing ioctl TTY\n");
+				int fd = open("/dayos/dev/tty", O_WRONLY);
+				if(fd == -1)
+				{
+					perror("Could not open '/dayos/dev/tty'");
+					break;
+				}
+
+				printf("Result 1: %d\n", ioctl(fd, 0xCAFEBABE, 0));
+				printf("Result 2: %d\n", ioctl(fd, 0xDEADBEEF, 1, "SOMETHINGELSE"));
+
+				close(fd);
+				
+			}
 			else if(!strcmp("fcntl", buffer))
 			{
 			

@@ -21,7 +21,8 @@ typedef enum
 typedef enum
 {
 	DEVICE_READ = 0x1,
-	DEVICE_WRITE = 0x2
+	DEVICE_WRITE = 0x2,
+	DEVICE_IOCTL = 0x3
 } DEVICE_ACTIONS;
 
 struct device_request
