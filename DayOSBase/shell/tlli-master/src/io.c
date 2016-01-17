@@ -9,7 +9,7 @@ tlliValue* tlli_Print(int num, tlliValue** args)
 	for(i = 0; i < num; ++i)
 	{
 		tlliValueToString(args[i], &buffer, 256);
-		printf("%s\n", buffer);
+		printf("%s", buffer);
 	}
 	tlliFree(buffer);
 	return 0;

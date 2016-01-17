@@ -78,7 +78,7 @@ int execute_program(const char* path, int argc, char* argv[])
 	{
 		perror("Could not open executable");
 		// printf("Could not find program %s!\n", path);
-		return 1;
+		return 0;
 	}
 	
 	char* content;

@@ -16,7 +16,6 @@
 
 // Maximum status number
 #define PROCESS_STATUS_MAX 4
-
 #define ROOT_UID 0
 
 struct MESSAGE_NODE
@@ -37,10 +36,12 @@ typedef struct process_struct
 {
 	struct cpu* state;
 	vmm_context_t* context;
+	
 	uint32_t pid;
+	uint32_t parent;
+	
 	uintptr_t signal; // The signal function that is called when a signal gets send
 
-	//message_t messages[MESSAGE_BUFFER_SIZE];
 	struct MESSAGE_LIST messages;
 	
 	uint32_t sbrk_state;
@@ -50,8 +51,10 @@ typedef struct process_struct
 	
 	uint32_t sleep_timer;
 	uint8_t status;
+	uint32_t waitpid_param;
 	
 	uint32_t uid;
+	uint32_t gid;
 	struct process_struct* next;
 }process_t;
 

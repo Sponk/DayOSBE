@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <dayos.h>
 
 #define CLAMP(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 
@@ -112,7 +113,7 @@ Framebuffer& Framebuffer::operator << (const char* s)
 const char* Framebuffer::parseGraphicsSequence(const char* str)
 {
 	// Handle graphics sequence
-	while(*str != 0 && *str != 'm' && (isdigit(*str) || *str == ';'))
+	while(*str != 0 && (isdigit(*str) || *str == ';'))
 	{
 		if(*str == '3')
 		{
@@ -242,45 +243,53 @@ const char* Framebuffer::parseEscape(const char* str)
 				
 				switch(*type)
 				{
-					case 'm': return parseGraphicsSequence(str);
-					case 'j': clear(); return type + 1;
-					
+					case 'm': parseGraphicsSequence(str); break;
+					case 'j': clear(); break;					
 					case 'f':
 					case 'h': 
 						
 						x = CLAMP(atoi(str), 0, 79);
-						while(*str && *str != ';')
-							str++;
+						str = strchr(str, ';');
 						
-						y = CLAMP(atoi(++str), 0, 24);
+						if(!str)
+							return type + 1;
+						
+						str++;
+						y = CLAMP(atoi(str), 0, 24);
 						updateCursor();
-						return type + 1;
+						break;
 						
 					case 'a':
 						y -= atoi(str);
 						y = CLAMP(y, 0, 24);
 						updateCursor();
-						return type + 1;
-						
+						break;
+
 					case 'b':
 						y += atoi(str);
 						y = CLAMP(y, 0, 24);
 						updateCursor();
-						return type + 1;
+						break;
 						
 					case 'c':
 						x += atoi(str);
 						x = CLAMP(x, 0, 79);
 						updateCursor();
-						return type + 1;
+						break;
 						
 					case 'd':
 						x -= atoi(str);
 						x = CLAMP(x, 0, 79);
 						updateCursor();
-						return type + 1;
+						break;
 				}
+
+				// Handle further sequences that are directly following
+				start = type + 1;
+				str = type;
+				state = 0;
 			}
+			break;
 		}
 
 		str++;

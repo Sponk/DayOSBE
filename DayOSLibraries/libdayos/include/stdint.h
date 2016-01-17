@@ -1,5 +1,5 @@
-#ifndef STDINT_H
-#define STDINT_H
+#ifndef __STDINT_H
+#define __STDINT_H
 
 typedef unsigned long long uint64_t;
 typedef long long int64_t;

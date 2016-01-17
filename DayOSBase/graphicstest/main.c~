@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <sys/utsname.h>
+
+#define setpos(a,b) printf("\x1B[%d;%dh ", a, b)
+#define setcolor(f,b) printf("\x1B[3%d;4%dm ", 30+f, 40+b)
+#define setforeground(f) printf("\x1B[%dm ", 30+f)
+#define setbackground(b) printf("\x1B[%dm ", 40+b)
+
+void fill(int x, int y, int w, int h, char c, int color)
+{
+	setforeground(4);
+	setbackground(color);
+	setpos(x, y);
+
+	fflush(stdout);
+	
+	for(int i = 0; i < h; i++)
+	{
+		setpos(x, y + i);
+
+		for(int j = 0; j < w; j++)
+			putchar(c);
+	}
+	
+}
+
+int main(int argc, char* argv[])
+{
+	fill(10, 10, 5, 5, 'X', 1);
+	fflush(stdout);
+
+	while(1);
+	return 0;
+}

@@ -9,22 +9,9 @@
 # endif
 #endif
 
-/*int isspace(int x);
-int isdigit(int x);
-int isxdigit(int x);
-int isalpha(int x);
-int toupper(int x);
-int tolower(int x);
-int isprint(int x);
-int isalnum(int x);
+#if defined(__cplusplus) || (defined(__STDC_VERSION__) && __STDC_VERSION__)
 
-int iscntrl(int x);
-int isgraph(int x);
-
-int isupper(int x);
-int islower(int x);
-int ispunct(int x);*/
-
+// C99 compatible source code.
 INLINE int isspace(int x) { return (x == ' ' || x == '\t' || x == '\n' || x == '\v' || x == '\f' || x == '\r'); }
 INLINE int isdigit(int x) { return (x >= '0' && x <= '9'); }
 INLINE int isxdigit(int x) { return ((x >= 'A' && x <= 'F') && (x >= 'a' && x <= 'f') && (x >= '0' && x <= '9')); }
@@ -40,6 +27,25 @@ INLINE int isgraph(int x) { return (isprint(x) && x != ' '); }
 INLINE int isupper(int x) { return (x >= 'A' && x <= 'Z'); }
 INLINE int islower(int x) { return (x >= 'a' && x <= 'z'); }
 INLINE int ispunct(int x) { return (isgraph(x) && !isalnum(x)); }
+
+#elif defined(__ANSI__)
+/* C89 compatible source code. */
+int isspace(int x);
+int isdigit(int x);
+int isxdigit(int x);
+int isalpha(int x);
+int toupper(int x);
+int tolower(int x);
+int isprint(int x);
+int isalnum(int x);
+
+int iscntrl(int x);
+int isgraph(int x);
+
+int isupper(int x);
+int islower(int x);
+int ispunct(int x);
+#endif
 
 #define isspace(x)                                                             \
 	((x) == ' ' || (x) == '\t' || (x) == '\n' || (x) == '\v' || (x) == '\f' || \

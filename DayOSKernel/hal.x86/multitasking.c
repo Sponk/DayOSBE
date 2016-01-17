@@ -23,8 +23,6 @@ process_t* CreateKernelProcess(void (*entry)())
 	uint8_t* stack = (uint8_t*) kmalloc(4096);
 	process_t* process = kmalloc(sizeof(process_t));
 	
-	DebugPrintf("Creating process %d with stack = 0x%x\n", num_proc, stack);
-	
 	assert(stack != NULL);
 	assert(process != NULL);
 	
@@ -122,6 +120,7 @@ process_t* CreateUserProcess(void (*entry)(), vmm_context_t* context)
 	process->next = first_process;
 	first_process = process;
 	
+	process->parent = current_process->pid;
 	process->pid = num_proc;
 	process->context = context;
 	
@@ -221,6 +220,16 @@ void KillProcess(process_t* process)
 	// Check for the first process
 	if(proc->pid == process->pid)
 	{
+		// Handle waitpid
+		process_t* parent = GetProcessByPid(proc->parent);
+		if(parent->status == PROCESS_WAITPID 
+			&& (parent->waitpid_param == proc->pid || parent->waitpid_param == -1))
+		{
+			parent->status = PROCESS_RUNNABLE;
+			parent->state->eax = process->pid;
+		}
+		
+		// Destroy process
 		first_process = process->next;
 		destroy_context(process->context);
 		
@@ -232,9 +241,17 @@ void KillProcess(process_t* process)
 	while(proc != NULL)
 	{
 		if(proc->next->pid == process->pid)
-		{			
-			destroy_context(process->context);
+		{
+			// Handle waitpid
+			process_t* parent = GetProcessByPid(process->parent);
+			if(parent->status == PROCESS_WAITPID 
+				&& (parent->waitpid_param == proc->pid || parent->waitpid_param == -1))
+			{
+				parent->status = PROCESS_RUNNABLE;
+				parent->state->eax = process->pid;
+			}
 			
+			destroy_context(process->context);
 			proc->next = process->next;
 			kfree(process->stack);
 			kfree(process);

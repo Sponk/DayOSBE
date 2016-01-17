@@ -3,6 +3,7 @@
 #include <dayos.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/wait.h>
 #include "tlli-master/include/tlli.h"
 
 char buffer[512];
@@ -160,14 +161,14 @@ int main()
 	tlliAddFunction(context, "exit", exitTlli);
 	tlliAddFunction(context, "execute", tlli_execute);
 	
-	//execute_script("/drives/roramdisk/lisp/boot.lisp", context);
+	execute_script("/drives/roramdisk/lisp/boot.lisp", context);
 	
 	//sleep(150);
 	//printf("\n\n\n");
 
-	printf("The DayOS shell v0.1\n\n");
+	printf("The DayOS shell v0.1\n");
 	printf("Type 'help' for a list of available commands.\n\n");
-
+	
 	// FILE* in = fopen("/dayos/dev/tty", "r");
 	// stdin = in;
 
@@ -188,15 +189,7 @@ int main()
 		
 		if (!useTlli)
 		{
-			char program[256];
-			snprintf(program, sizeof(program), "%s/%s", "/drives/roramdisk", buffer);
-			
-			// First entry is the program name, but that'll be supplied by the full path
-			if(!execute_program(program, count_args(argv) - 1, argv + 1))
-			{
-				
-			}
-			else if (!strcmp("tlli", buffer))
+			if (!strcmp("tlli", buffer))
 			{
 				useTlli = 1;
 				printf("Using TLLI for LISP interface. Type (exit) to return "
@@ -204,7 +197,7 @@ int main()
 			}
 			else if (!strcmp("help", buffer))
 			{
-				printf("Commands: help, tlli, readfloppy\n\n");
+				printf("Commands: help, tlli, readfloppy\n");
 			}
 			else if (!strcmp("exit", buffer))
 			{
@@ -260,7 +253,12 @@ int main()
 			}
 			else if (strlen(buffer) > 0)
 			{
-				printf("Unknown command!\n\n");
+				char program[256];
+				snprintf(program, sizeof(program), "%s/%s", "/drives/roramdisk", buffer);
+				pid_t pid = execute_program(program, count_args(argv) - 1, argv + 1);
+				
+				if(pid)
+					waitpid(pid, NULL, 0);
 			}
 		}
 		else

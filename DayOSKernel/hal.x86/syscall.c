@@ -206,6 +206,14 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	}
 	break;
 	
+	// waitpid
+	case 14: {
+		current_process->status = PROCESS_WAITPID;
+		current_process->waitpid_param = cpu_old->ebx;
+		cpu_old = Schedule(cpu_old);
+	}
+	break;
+	
 	default: DebugPrintf("[ SYSCALL ] Unknown syscall 0x%x from %d\n", cpu_old->eax, current_process->pid);
 	}
 	
