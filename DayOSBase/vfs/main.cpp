@@ -9,23 +9,6 @@
 
 using namespace std;
 
-class clc
-{
-	public: 
-		clc()
-		{ 
-			debug_printf("CONSTRUCTOR!!!!!\n"); 
-			
-		}
-} obj;
-
-clc lala;
-
-__attribute__ ((constructor)) void foo(void)
-{
-	debug_printf("CONSTRUCTOR!!!!!\n"); 
-}
-
 int main(int argc, char* argv[])
 {
 	FileSystem rootfs;
@@ -39,6 +22,8 @@ int main(int argc, char* argv[])
 		debug_printf("[ VFS ] Could not register VFS service. Will terminate.\n");
 		return -1;
 	}
+	
+	pid_t vfs_pid = get_service_pid("vfs");
 
 	message_t msg;
 	struct vfs_request* request = (struct vfs_request*)&msg.message;
@@ -140,8 +125,125 @@ int main(int argc, char* argv[])
 
 				send_message(&msg, sender);
 			}
+
+		    case VFS_SIGNAL_OPEN_DIR: {
+				pid_t sender = msg.sender;
+				FSNode* node = rootfs.findNode(request->path);
+				struct vfs_file* file = (struct vfs_file*) &msg.message;
+
+				if (!node || (node->getType() != NODE_MOUNT 
+							  && node->getType() != NODE_DIR))
+				{
+					msg.signal = SIGNAL_FAIL;
+					send_message(&msg, msg.sender);
+					break;
+				}
+				
+				msg.signal = SIGNAL_OK;
+				switch (node->getType())
+				{
+					case NODE_DIR:
+					{
+						FSDir* dir = static_cast<FSDir*>(node);
+						file->type = VFS_DIRECTORY;
+						file->uid = dir->getUID();
+						file->guid = dir->getGUID();
+						file->nid = dir->getNodeId();
+						file->device = vfs_pid;
+						file->offset = 0;
+						strcpy(file->path, request->path);	
+					}
+					break;
+
+					case NODE_MOUNT:
+					{
+						FSMount* mount = static_cast<FSMount*>(node);
+						file->device = mount->getFilesystemDriver();
+						file->type = VFS_MOUNTPOINT;
+
+						// FIXME: Fetch from FS driver!
+						file->uid = mount->getUID();
+						file->guid = mount->getGUID();
+
+						std::string path;
+						path = request->path;
+						path = path.substr(strlen(mount->getPath()));
+						
+						if(path.empty())
+							path = "/";
+						
+						strcpy(file->path, path.c_str());
+					}
+					break;
+				}
+			
+				send_message(&msg, sender);
+			}
+			break;
+
+			 case VFS_SIGNAL_READ_DIR: {
+				pid_t sender = msg.sender;
+				FSNode* node = rootfs.findNode(request->path);
+				struct vfs_file* file = (struct vfs_file*) &msg.message;
+
+				if (!node || (node->getType() != NODE_MOUNT 
+							  && node->getType() != NODE_DIR))
+				{
+					msg.signal = SIGNAL_FAIL;
+					send_message(&msg, msg.sender);
+					break;
+				}
+
+				msg.signal = SIGNAL_OK;
+				switch (node->getType())
+				{
+					case NODE_DIR:
+					{
+						FSDir* dir = static_cast<FSDir*>(node);
+						node = dir->getChild(request->param);
+						
+						if(!node)
+						{
+							msg.signal = SIGNAL_FAIL;
+							break;
+						}
+						
+						file->type = node->getType();
+						file->uid = node->getUID();
+						file->guid = node->getGUID();
+						file->nid = node->getNodeId();
+
+						strcpy(file->path, node->getName());
+					}
+					break;
+
+					case NODE_MOUNT:
+					{
+						FSMount* mount = static_cast<FSMount*>(node);
+						file->device = mount->getFilesystemDriver();
+						file->type = VFS_MOUNTPOINT;
+
+						// FIXME: Fetch from FS driver!
+						file->uid = mount->getUID();
+						file->guid = mount->getGUID();
+						file->nid = node->getNodeId();
+
+						std::string path;
+						path = request->path;
+						path = path.substr(strlen(mount->getPath()));
+						
+						strcpy(file->path, path.c_str());
+					}
+					break;
+				}
+			
+				send_message(&msg, sender);
+			}
+			
 			default:
-			{}
+			{
+				// debug_printf("[ VFS ] Unknown signal %d from %d\n", msg.signal, msg.sender);
+			}
 		}
 	}
 

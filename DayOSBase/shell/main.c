@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include "tlli-master/include/tlli.h"
 
 char buffer[512];
@@ -203,6 +204,18 @@ int main()
 			else if (!strcmp("exit", buffer))
 			{
 				return 0;
+			}
+			else if(!strcmp("ls", buffer))
+			{
+				DIR* dir = opendir(argv[1]);
+				struct dirent* entry;
+
+				while ((entry = readdir(dir)) != NULL) 
+				{
+					printf ("[%s]\n", entry->d_name);
+				}
+				
+				closedir(dir);
 			}
 			else if(!strcmp("ioctl", buffer))
 			{

@@ -36,6 +36,7 @@
 
 #include <stddef.h>
 #include <vfs.h>
+#include <sys/types.h>
 
 enum NODE_TYPE
 {
@@ -51,6 +52,7 @@ class FSNode
 	VFS_OPEN_MODES mode;
 	pid_t uid;
 	pid_t guid;
+	ino_t nid;
 
 public:
 	FSNode(){};
@@ -65,7 +67,10 @@ public:
 	VFS_OPEN_MODES getMode() { return mode; }
 	virtual std::string toString();
 	virtual NODE_TYPE getType() { return NODE_EMPTY; }
-
+	
+	ino_t getNodeId() { return nid; }
+	ino_t setNodeId(ino_t id) { nid = id; }
+	
 	pid_t getUID() { return uid; }
 	pid_t getGUID() { return guid; }
 
@@ -107,6 +112,14 @@ public:
 				return n;
 		}
 		return NULL;
+	}
+	
+	FSNode* getChild(ino_t id)
+	{
+		if(id >= children.size() || id < 0)
+			return NULL;
+		
+		return children[id];
 	}
 };
 

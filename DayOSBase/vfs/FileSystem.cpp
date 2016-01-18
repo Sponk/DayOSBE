@@ -144,6 +144,7 @@ bool FileSystem::addNode(const char* path, FSNode* node)
 		return false;
 	
 	//printf("Adding node %s to %s \n", node->getName(), parent->getName());
+	node->setNodeId(parent->children.size());
 	parent->children.push_back(node);//.emplace(node->getName(), node);
 	return true;
 }

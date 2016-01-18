@@ -160,9 +160,9 @@ tar_header_t* GetRamDiskFileRel(const char* path)
 	char fullpath[512];
 	strcpy(fullpath, ".");
 	
-	if(strlen(path) > 1)
+	if(strlen(path) >= 1)
 		strcat(fullpath, path);
-		
+
 	return GetRamDiskFile(fullpath);
 }
 
@@ -210,6 +210,7 @@ void ramdisk_process()
 	
 	message_t msg;
 	struct vfs_request* rq = (struct vfs_request*) &msg.message;
+	struct vfs_file* vfile = (struct vfs_file*) &msg.message;
 	char* data = NULL;
 	tar_header_t* file;
 	
@@ -270,6 +271,64 @@ void ramdisk_process()
 				}
 
 				write_message_stream(data+rq->offset, sz, msg.sender);
+			}
+			break;
+			
+			case FS_SIGNAL_OPEN_DIR: {
+				file = GetRamDiskFileRel(rq->path);
+				
+				if(!file)
+				{
+					msg.signal = SIGNAL_FAIL;
+					send_message(&msg, msg.sender);
+					break;
+				}
+				
+				// Find first entry of the directory
+				int i;
+				for(i = 0; i < fileno; i++)
+				{
+					if(!strcmp(files[i]->filename + 1, rq->path))
+					{
+						i++;
+						break;
+					}
+				}
+			
+				vfile->offset = i;
+				
+				msg.size = 0;
+				msg.signal = SIGNAL_OK;
+				send_message(&msg, msg.sender);
+				
+				strcpy(vfile->path, rq->path);
+			}
+			break;
+			
+			case VFS_SIGNAL_READ_DIR: {
+				
+				if(rq->param < 0 || rq->param >= fileno)
+				{
+					msg.signal = SIGNAL_FAIL;
+					send_message(&msg, msg.sender);
+					break;
+				}
+				
+				file = files[rq->param];
+				
+				size_t len = strlen(rq->path) + 1;
+				if(len >= strlen(file->filename) || strchr(&file->filename[len], '/'))
+				{
+					msg.signal = SIGNAL_FAIL;
+					send_message(&msg, msg.sender);
+					break;
+				
+				}
+				
+				vfile->nid = rq->param;
+				strcpy(vfile->path, file->filename);
+				msg.signal = SIGNAL_OK;
+				send_message(&msg, msg.sender);
 			}
 			break;
 			

@@ -85,7 +85,7 @@ int vfs_stat(struct vfs_file* file, struct stat* stat)
 	msg.signal = FS_SIGNAL_STAT;
 	strcpy(rq->path, file->path);
 	
-	send_message(&msg, file->device);	
+	send_message(&msg, file->device);
 	while(receive_message(&msg, file->device) != MESSAGE_RECEIVED) sleep(1);
 	
 	if(msg.signal != SIGNAL_OK)
@@ -97,4 +97,29 @@ int vfs_stat(struct vfs_file* file, struct stat* stat)
 	*stat = *fs_stat;
 	
 	return 0;
+}
+
+#include <dayos.h>
+int vfs_readdir(struct vfs_file* dir, struct vfs_file* dest, int num)
+{
+	if(!dir || !dest)
+		return -1;
+	
+	message_t msg;
+	struct vfs_request* rq = (struct vfs_request*) &msg.message;
+	msg.signal = VFS_SIGNAL_READ_DIR;
+	
+	rq->param = num;
+	strcpy(rq->path, dir->path);
+	
+	send_message(&msg, dir->device);
+	while(receive_message(&msg, dir->device) != MESSAGE_RECEIVED) sleep(1);
+	
+	if(msg.signal != SIGNAL_OK)
+	{
+		return -1;
+	}
+	
+	struct vfs_file* f = (struct vfs_file*) &msg.message;
+	*dest = *f;
 }

@@ -17,7 +17,7 @@ cp -r DayOSBase/shell/lisp/ rootsys/image
 # Ramdisk bauen
 cp init.cfg rootsys/image
 cd rootsys/image
-tar -cvf ../../ramdisk.tar .
+tar -H gnu -cvf ../../ramdisk.tar .
 cd ../..
 
 # Image einhängen.

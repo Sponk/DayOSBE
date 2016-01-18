@@ -17,7 +17,9 @@ typedef enum
 	VFS_SIGNAL_CREATE_DEVICE = 0,
 	VFS_SIGNAL_OPEN = 1,
 	VFS_SIGNAL_MOUNT_DEVICE = 2,
-	VFS_SIGNAL_MOUNT_RAMDISK = 3
+	VFS_SIGNAL_MOUNT_RAMDISK = 3,
+	VFS_SIGNAL_OPEN_DIR = 4,
+	VFS_SIGNAL_READ_DIR = 5
 } VFS_SIGNALS;
 
 typedef enum
@@ -28,6 +30,7 @@ typedef enum
 	VFS_DIRECTORY = 3
 } DEVICE_TYPES;
 
+#include <sys/types.h>
 #include <stdint.h>
 
 // One vfs_request has to fit into one message.
@@ -57,6 +60,7 @@ struct vfs_file
 	uint32_t type;
 	uint32_t guid;
 	uint32_t uid;
+	ino_t nid;
 	size_t offset;
 	size_t size;
 };
@@ -75,10 +79,10 @@ extern "C" {
  * @return SIGNAL_OK if everything went well, SIGNAL_FAIL if not.
  */
 int vfs_create_device(const char* path, unsigned int mode, unsigned int type);
-int vfs_mount_device(const char* src, const char* dest, const char* fsd,
-					 unsigned int mode);
+int vfs_mount_device(const char* src, const char* dest, const char* fsd, unsigned int mode);
 int vfs_mount_ramdisk(const char* dest, unsigned int mode);
 
+int vfs_readdir(struct vfs_file* dir, struct vfs_file* dest, int num);
 int vfs_stat(struct vfs_file* file, struct stat* stat);
 
 #ifdef __cplusplus
