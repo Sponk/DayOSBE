@@ -1,7 +1,7 @@
 #undef TARGET_DAYOS
 #define TARGET_DAYOS 1
  
-#define LIB_SPEC "-lcrt0 -ldayos -lm" // -lg" /* link against C standard libraries */
+#define LIB_SPEC "-ldayos -lm" // -lg" /* link against C standard libraries */
                                /* modify this based on your needs */
  
 /* Don't automatically add extern "C" { } around header files. */
@@ -20,11 +20,13 @@
   } while(0);
   
 #undef STARTFILE_SPEC
-#define STARTFILE_SPEC "/usr/lib/crti.o"
+#define STARTFILE_SPEC "%{!shared: %{!symbolic: %{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}} crti.o%s crtbegin.o%s"
 
 #undef ENDFILE_SPEC
-#define ENDFILE_SPEC "/usr/lib/crtn.o"
-  
+#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+
+//#undef STANDARD_STARTFILE_PREFIX
+//#define STANDARD_STARTFILE_PREFIX "/lib/"
   
 /*#ifdef HAVE_INITFINI_ARRAY_SUPPORT
 

@@ -324,15 +324,15 @@ esac
 case ${host} in
 
 i[34567]86-*-dayos*)
-	#extra_parts="$extra_parts crtbegin.o crtend.o"
-	#tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
-	extra_parts="crtbegin.o crtend.o"
+	extra_parts="$extra_parts crtbegin.o crtend.o"
+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
+	#extra_parts="crtbegin.o crtend.o"
 
 	;;
 x86_64-*-dayos*)
-	#extra_parts="$extra_parts crtbegin.o crtend.o"
-	#tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
-	extra_parts="crtbegin.o crtend.o"
+	extra_parts="$extra_parts crtbegin.o crtend.o"
+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
+	#extra_parts="crtbegin.o crtend.o"
 	;;
 
 aarch64*-*-elf)

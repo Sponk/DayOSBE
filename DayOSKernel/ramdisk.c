@@ -286,9 +286,11 @@ void ramdisk_process()
 				
 				// Find first entry of the directory
 				int i;
+				size_t dirname_len = strlen(files[i]->filename);
 				for(i = 0; i < fileno; i++)
 				{
-					if(!strcmp(files[i]->filename + 1, rq->path))
+					DebugPrintf("Comparing %s to %s\n", files[i]->filename + 1, rq->path);
+					if(!strncmp(files[i]->filename + 1, rq->path, dirname_len))
 					{
 						i++;
 						break;
@@ -316,8 +318,12 @@ void ramdisk_process()
 				
 				file = files[rq->param];
 				
+				size_t curfile_len = strlen(file->filename);
 				size_t len = strlen(rq->path) + 1;
-				if(len >= strlen(file->filename) || strchr(&file->filename[len], '/'))
+				const char* last_slash = strchr(&file->filename[len], '/');
+
+				if(len >= curfile_len
+				   || (last_slash && last_slash != &file->filename[curfile_len-1]))
 				{
 					msg.signal = SIGNAL_FAIL;
 					send_message(&msg, msg.sender);

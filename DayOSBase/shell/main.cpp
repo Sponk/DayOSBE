@@ -4,9 +4,12 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
+
 #include <fcntl.h>
 #include <dirent.h>
 #include "tlli-master/include/tlli.h"
+#include <iostream>
 
 char buffer[512];
 void read_line(FILE* stream)
@@ -14,7 +17,7 @@ void read_line(FILE* stream)
 	char c;
 	char* s = buffer;
 	while ((c = fgetc(stream)) != '\n' && c != EOF &&
-		   s < (&buffer + sizeof(buffer)))
+		   s < ((char*) &buffer + sizeof(buffer)))
 	{
 		if (c == '\b' && s > buffer)
 		{
@@ -73,7 +76,7 @@ tlliValue* exitTlli(int i, tlliValue** val)
 tlliValue* tlli_execute(int i, tlliValue** val)
 {
 	tlliValue* rtn;
-	char* buf = malloc(512);
+	char* buf = (char*) malloc(512);
 	
 	tlliValueToString(val[0], &buf, 512);
 	tlliIntToValue(execute_program(buf, 0, NULL), &rtn);
@@ -174,8 +177,8 @@ int main()
 	// FILE* in = fopen("/dayos/dev/tty", "r");
 	// stdin = in;
 
-	char* outputBuffer = malloc(512);
-	char** argv = malloc(sizeof(char*) * 512);
+	char* outputBuffer = (char*) malloc(512);
+	char** argv = (char**) malloc(sizeof(char*) * 512);
 	
 	while (1)
 	{
@@ -212,7 +215,7 @@ int main()
 
 				while ((entry = readdir(dir)) != NULL) 
 				{
-					printf ("[%s]\n", entry->d_name);
+					printf ("    %s\n", entry->d_name);
 				}
 				
 				closedir(dir);
@@ -284,7 +287,7 @@ int main()
 				FILE* f = fopen("/dayos/dev/fdc", "r");
 				// fseek(f, 1024, SEEK_SET);
 
-				unsigned char* buf = malloc(wantedSize);
+				unsigned char* buf = (unsigned char*) malloc(wantedSize);
 				uint32_t sz = fread(buf, wantedSize, 1, f);
 
 				printf("Read %d bytes\n\n");

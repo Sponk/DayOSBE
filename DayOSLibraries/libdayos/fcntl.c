@@ -35,7 +35,7 @@ int open(const char *pathname, int flags, ...)
 
 	file = fopen(pathname, args);
 	if(!file)
-		return idx;
+		return -1;
 
 	idx = vector_size++;
 	if(vector_size > vector_allocated_size)
@@ -89,5 +89,8 @@ int fdatasync(int fd)
 // TODO: Public interface?
 FILE* fd2file(int fd)
 {
+	if(fd < 0 || fd >= vector_size )
+		return NULL;
+
 	return vector_array[fd];
 }

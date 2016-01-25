@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <string.h>
+#include <fcntl.h>
 
 extern void InitHeap();
 extern void init_signals();
@@ -100,6 +101,7 @@ int execute_program(const char* path, int argc, char* argv[])
 	return pid;
 }
 
+extern FILE* fd2file(int fd);
 char** init_libdayos(int* argc)
 {
 	setup_stack_chk();
@@ -114,12 +116,44 @@ char** init_libdayos(int* argc)
 	{
 		argv = receive_args(argc);
 
+		/*int fdin, fdout, fderr;
+
+		fdin = open("/dayos/dev/tty", O_RDONLY);
+		fdout = open("/dayos/dev/tty", O_WRONLY);
+		fderr = open("/dayos/dev/tty", O_WRONLY);
+
+		stdin = NULL;
+		stdout = NULL;
+		stderr = NULL;
+
+		if(fdin != -1)
+			stdin = fd2file(fdin);
+
+		if(fdout != -1)
+			stdout = fd2file(fdout);
+
+		if(fderr != -1)
+			stderr = fd2file(fderr);
+
+			debug_printf("stdin: %x\n", stdout);*/
+		
 		stdin = fopen("/dayos/dev/tty", "r");
 		stdout = fopen("/dayos/dev/tty", "w");
 		stderr = fopen("/dayos/dev/tty", "w");
+		
 	}
 	else
 		debug_printf("No VFS available!\n");
 	
 	return argv;
 }
+
+
+
+
+
+
+
+
+
+
