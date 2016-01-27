@@ -1,15 +1,19 @@
 #include <stdlib.h>
 
-static unsigned int random_seed;
+#define A 1103515245
+#define C 12345
+#define M 0xFFFFFE
+
+// Using the Linear Conguential Generator
+static unsigned int x;
 
 int rand()
 {
-	// https://www.xkcd.com/221/
-	return 4; // Chosen by a fair dice roll!
-		  // Guaranteed to be random!
+	x = (A * x + C) % M;
+	return x;
 }
 
 void srand(unsigned int seed)
 {
-	random_seed = seed;
+	x = seed;
 }

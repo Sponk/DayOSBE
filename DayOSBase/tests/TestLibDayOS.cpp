@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <dayos.h>
 #include <string.h>
 #include "tinytest.h"
@@ -144,6 +145,16 @@ void test_buffer_resize()
 	destroy_day_buffer(buffer);
 }
 
+void test_random()
+{
+	int seed = 0xCAFEBABE;
+	srand(seed);
+
+	for(int i = 0; i < 5; i++)
+	{
+		printf("Got random number: %d\n", rand());
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -165,6 +176,7 @@ int main(int argc, char* argv[])
 	RUN(test_buffer_getchar);
 	RUN(test_buffer_fillbuffer);
 	RUN(test_buffer_resize);
+	RUN(test_random);
 
 	return TEST_REPORT();
 }

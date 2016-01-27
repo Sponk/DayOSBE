@@ -24,5 +24,6 @@ add_subdirectory(vfs)
 add_subdirectory(ramdisk)
 add_subdirectory(uname)
 add_subdirectory(graphicstest)
+add_subdirectory(randomgame)
 
 add_subdirectory(tests)
