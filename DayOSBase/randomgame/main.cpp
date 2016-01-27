@@ -24,9 +24,9 @@ int main(int argc, char* argv[])
 	while(inputNumber != number)
 	{
 		cout << "Input a number: ";
-		//cin >> inputNumber;
-		fgets(buffer, sizeof(buffer), stdin);
-		inputNumber = atoi(buffer);
+		cin >> inputNumber;
+		//fgets(buffer, sizeof(buffer), stdin);
+		//inputNumber = atoi(buffer);
 		
 		if(inputNumber > number)
 			cout << "Your number is greater than my one" << endl;

@@ -541,12 +541,14 @@ char* fgets(char* str, int num, FILE* stream)
 	if (!str || !num || !stream)
 		return NULL;
 	
-	for(int i = 0; i < num; i++)
+	for(int i = 0; i < num - 1; i++)
 	{
 		if ((str[i] = fgetc(stream)) == '\n'
 			|| str[i] == EOF)
-
+		{
+			str[i+1] = 0;
 			return str;
+		}
 	}
 
 	return str;
