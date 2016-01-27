@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <vfs.h>
+#include <stdlib.h>
 
 // RAM-Disk ist eine tar-file
 typedef struct
@@ -197,13 +198,17 @@ void InitRamdisk(uintptr_t addr)
 void ramdisk_process()
 {
 	DebugLog("[ RAMDISK ] RAM-Disk daemon started.");
-	sleep(50);
+
+	// Wait for VFS to crop up
+	pid_t pid = 0;
+	while((pid = get_service_pid("vfs")) == 0) sleep(50);
 	
 	int retval = vfs_mount_ramdisk("/drives/roramdisk", VFS_MODE_RO);
 	if (retval == SIGNAL_FAIL)
 	{
 		DebugLog("[ RAMDISK ] Could not mount device!");
-		while(1) sleep(1000);
+		exit(-1);
+		while(1);
 	}
 	
 	DebugLog("[ RAMDISK ] Mounted ramdisk to '/drives/roramdisk'");
