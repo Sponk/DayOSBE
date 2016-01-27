@@ -543,14 +543,22 @@ char* fgets(char* str, int num, FILE* stream)
 	
 	for(int i = 0; i < num; i++)
 	{
-		str[i] = fgetc(stream);
-		if (str[i] == '\n' || str[i] == 0)
-		{
-			str[i] = '\0';
+		if ((str[i] = fgetc(stream)) == '\n'
+			|| str[i] == EOF)
+
 			return str;
-		}
 	}
 
+	return str;
+}
+
+char* gets(char* str)
+{
+	if (!str || !stdin)
+		return NULL;
+
+	char* iter = str;
+	while((*iter++ = fgetc(stdin)) != '\n');
 	return str;
 }
 

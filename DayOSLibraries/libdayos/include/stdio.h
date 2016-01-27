@@ -46,7 +46,8 @@ int ungetc(int character, FILE* stream);
 int fputc(int character, FILE* stream);
 int fgetc(FILE* stream);
 int getc(FILE* stream);
-
+char* gets(char* str);
+	
 int vfprintf(FILE* stream, const char* fmt, va_list ap);
 int fprintf(FILE* stream, const char* fmt, ...);
 int feof(FILE* stream);

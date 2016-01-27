@@ -187,6 +187,7 @@ int main()
 		
 		//read_line(stdin);
 		fgets(buffer, 512, stdin);
+		//gets(buffer);
 		parse(buffer, argv);
 		
 		//printf("Got input: %s\n", buffer);
