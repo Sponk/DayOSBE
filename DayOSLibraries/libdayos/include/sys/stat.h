@@ -21,7 +21,12 @@ struct stat
 	struct timespec st_ctim;
 	blksize_t st_blksize;
 	blkcnt_t st_blocks;
+
+	time_t st_atime;
+	time_t st_mtime;
+	time_t st_ctime;
 };
+
 #ifdef __cplusplus
 extern "C" {
 #endif
