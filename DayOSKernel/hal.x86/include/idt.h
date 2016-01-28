@@ -50,6 +50,6 @@ int registerHandlerProcess(int irqno, uint32_t pid);
 int resetHandlerProcess(int irqno, uint32_t pid);
 void removeHandlerProcess(uint32_t pid);
 
-long unsigned int getTickCount();
+unsigned long long getTickCount();
 
 #endif

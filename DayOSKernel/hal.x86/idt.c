@@ -16,9 +16,9 @@
 extern uint32_t tss[32];
 extern process_t* current_process;
 
-long unsigned int tick_count = 0;
+static unsigned long long tick_count = 0;
 
-long unsigned int getTickCount()
+unsigned long long getTickCount()
 {
 	return tick_count;
 }
