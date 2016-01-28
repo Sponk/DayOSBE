@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <syscall.h>
 
 #define VERSION "3.11"
 
@@ -8,15 +9,13 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	// TODO: Time as randomseed!!!
-	if(argc > 1)
-	{
-		srand(atoi(argv[1]));
-	}
+	unsigned int seed = syscall1(15, 0);			
+	srand(seed);
+	cout << "Got seed " << seed << endl;
 	
 	cout << "Random Number Game v" << rand() % 9 << "." << rand() % 999 << endl;
 	
-	unsigned int number = rand() % 20;
+	unsigned int number = rand();
 	unsigned int inputNumber = 0;
 
 	char buffer[512];
@@ -25,9 +24,7 @@ int main(int argc, char* argv[])
 	{
 		cout << "Input a number: ";
 		cin >> inputNumber;
-		//fgets(buffer, sizeof(buffer), stdin);
-		//inputNumber = atoi(buffer);
-		
+    
 		if(inputNumber > number)
 			cout << "Your number is greater than my one" << endl;
 		else if(inputNumber < number)

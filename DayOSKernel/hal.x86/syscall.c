@@ -213,6 +213,11 @@ struct cpu* Syscall(struct cpu* cpu_old)
 		cpu_old = Schedule(cpu_old);
 	}
 	break;
+
+	// get tick count
+	case 15: {
+		cpu_old->eax = getTickCount();
+	}
 	
 	default: DebugPrintf("[ SYSCALL ] Unknown syscall 0x%x from %d\n", cpu_old->eax, current_process->pid);
 	}
