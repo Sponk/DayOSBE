@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <dayos.h>
 #include <string.h>
+#include <unistd.h>
 #include "tinytest.h"
 
 using namespace std;
@@ -156,6 +157,38 @@ void test_random()
 	}
 }
 
+void test_optargs()
+{
+	int argc = 5;
+	const char* argv[] = {"uname", "-a", "-v", "-f", "filename"};
+
+	bool a = false, v = false;
+	const char* filename = NULL;
+	
+	int c = 0;
+	while((c = getopt(argc, (char**) argv, ":avf:")) != -1)
+	{
+		switch(c)
+		{
+		case 'a':
+			a = true;
+			break;
+
+		case 'v':
+			v = true;
+			break;
+
+		case 'f':
+			filename = optarg;
+			break;
+		}
+	}
+
+	ASSERT("Argument a was found", a);
+	ASSERT("Argument v was found", v);
+	ASSERT_STRING_EQUALS("filename", filename);
+}
+
 int main(int argc, char* argv[])
 {
 	printf("\n");
@@ -176,6 +209,7 @@ int main(int argc, char* argv[])
 	RUN(test_buffer_getchar);
 	RUN(test_buffer_fillbuffer);
 	RUN(test_buffer_resize);
+	RUN(test_optargs);
 	RUN(test_random);
 
 	return TEST_REPORT();
