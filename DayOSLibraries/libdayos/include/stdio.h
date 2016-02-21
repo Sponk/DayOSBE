@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <vfs.h>
-#include <buffer.h>
+#include "buffer.h"
 #include <sys/stat.h>
 
 typedef struct

@@ -132,8 +132,7 @@ int main()
 	if (retval == SIGNAL_FAIL)
 	{
 		debug_printf("[ TTY ] Could not create device file!\n");
-		while (1)
-			;
+		while (1);
 		return -1;
 	}
 
@@ -156,8 +155,8 @@ int main()
 	while (1)
 	{
 		msg.signal = 0;
-		while (receive_message(&msg, MESSAGE_ANY) != MESSAGE_RECEIVED);
-
+		while (receive_message(&msg, MESSAGE_ANY) != MESSAGE_RECEIVED) sleep(10);
+		
 		switch (msg.signal)
 		{
 			case 0x21:

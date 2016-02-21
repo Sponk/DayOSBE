@@ -9,60 +9,11 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include "tlli-master/include/tlli.h"
+
 #include <iostream>
 
-char buffer[512];
-void read_line(FILE* stream)
-{
-	char c;
-	char* s = buffer;
-	while ((c = fgetc(stream)) != '\n' && c != EOF &&
-		   s < ((char*) &buffer + sizeof(buffer)))
-	{
-		if (c == '\b' && s > buffer)
-		{
-			*s = 0;
-			s--;
-			putch('\b');
-			continue;
-		}
-		else if (c == '\b')
-			continue;
-
-		*s = c;
-		s++;
-	}
-
-	*s = '\0';
-}
-
-/*int execute_program(const char* path)
-{
-	FILE* exec = fopen(path, "r");
-	
-	if(!exec)
-	{
-		// printf("Could not find program %s!\n", path);
-		return 1;
-	}
-	
-	char* content;
-	fseek(exec, 0, SEEK_END);
-	size_t sz = ftell(exec);
-	fseek(exec, 0, SEEK_SET);
-
-	content = (char*) malloc(sz);
-	fread(content, sz, 1, exec);
-	
-	syscall1(9, content);
-	
-	fclose(exec);
-	free(content);
-	
-	return 0;
-}*/
-
-int useTlli = 0;
+using namespace std;
+static int useTlli = 0;
 
 tlliValue* exitTlli(int i, tlliValue** val)
 {
@@ -171,12 +122,13 @@ int main()
 	//sleep(150);
 	//printf("\n\n\n");
 
-	printf("The DayOS shell v0.1\n");
-	printf("Type 'help' for a list of available commands.\n\n");
+	cout << "The DayOS shell v0.1\n";
+	cout << "Type 'help' for a list of available commands.\n" << endl;
 	
 	// FILE* in = fopen("/dayos/dev/tty", "r");
 	// stdin = in;
 
+    char* buffer = (char*) malloc(512);
 	char* outputBuffer = (char*) malloc(512);
 	char** argv = (char**) malloc(sizeof(char*) * 512);
 	
@@ -208,6 +160,37 @@ int main()
 			else if (!strcmp("exit", buffer))
 			{
 				return 0;
+			}
+			else if (!strcmp("writefile", buffer))
+			{
+				FILE* f = fopen("/drives/ramfs/file.txt", "w");
+
+				if (f)
+				{
+					printf("Successfully opened file!\n");
+					fputs("Hello World!!!!\n", f);
+					//fflush(f);
+					
+					fclose(f);
+					printf("Closed file\n");
+				}
+			}
+			else if (!strcmp("readfile", buffer))
+			{
+				FILE* f = fopen("/drives/ramfs/file.txt", "r");
+				char buf[256];
+				
+				if (f)
+				{
+					printf("Successfully opened file!\n");
+					//fgets(buf, 256, f);
+					fread(buf, 16, 1, f);
+					buf[16] = 0;
+					printf("Read: %s\n", buf);
+					
+					fclose(f);
+					printf("Closed file\n");
+				}
 			}
 			else if(!strcmp("ls", buffer))
 			{
@@ -327,6 +310,5 @@ int main()
 		}
 	}
 
-	for (;;)
-		;
+	return 0;
 }
