@@ -23,6 +23,9 @@ extern void* kernel_start;
 #define VMM_WRITE 0x2
 #define VMM_USERSPACE 0x4
 
+// Custom value: signifies that the page needs to be freed when the context is deleted (1 << 10)
+#define VMM_ALLOCATED (1 << 10)
+
 typedef struct
 {
 	uint32_t* pagedir;
@@ -35,6 +38,7 @@ vmm_context_t* CreateUsermodeContext(int kernel_write);
 void activate_memory_context(vmm_context_t* context);
 void vmm_alloc(vmm_context_t* context, uintptr_t vaddr, uint32_t sz);
 void destroy_context(vmm_context_t* context);
-void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t userspace);
-
+void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint8_t userspace, uint8_t allocated);
+void enable_paging(int value);
+	
 #endif

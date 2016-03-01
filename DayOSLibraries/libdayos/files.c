@@ -104,7 +104,10 @@ FILE* fopen(const char* filename, const char* mode)
 			free(f);
 			return NULL;
 		}
+	}
 
+	if(intmode & VFS_MODE_RO)
+	{
 		vfs_stat(vfile, &f->stat);
 	}
 
@@ -333,13 +336,9 @@ size_t ftell(FILE* stream) { return stream->native_file.offset; }
 int feof(FILE* stream)
 {
 	if (!stream)
-		return 0;
+		return 1;
 
-	struct stat stat;
-	if (vfs_stat(&stream->native_file, &stat))
-		return 0;
-
-	return (stream->native_file.offset >= stat.st_size);
+	return (stream->native_file.offset >= stream->stat.st_size);
 }
 
 int fprintf(FILE* stream, const char* fmt, ...)

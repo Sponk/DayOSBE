@@ -255,6 +255,17 @@ int main()
 			}
 			break;
 
+			case FS_SIGNAL_STAT: {
+				struct stat* stat = (struct stat*) &msg.message;
+				
+				stat->st_dev = msg.receiver;
+				stat->st_size = -1;
+
+				msg.signal = SIGNAL_OK;
+				send_message(&msg, msg.sender);
+			}
+			break;
+
 			case DEVICE_READ:
 				
 				if (read_request != 0 && msg.sender != read_request)

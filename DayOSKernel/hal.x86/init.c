@@ -138,6 +138,9 @@ void init (struct multiboot_info *mb_info, uint32_t kernel_esp)
 	
 
 	InitBootDrivers();
+
+	//int32_test();
+	
 	__asm ("sti");
 	for (;;);
 }

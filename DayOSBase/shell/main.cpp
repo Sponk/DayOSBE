@@ -1,314 +1,48 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
 #include <dayos.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/ioctl.h>
-
-#include <fcntl.h>
-#include <dirent.h>
-#include "tlli-master/include/tlli.h"
-
+#include <vector>
 #include <iostream>
+#include <string>
+#include <sys/wait.h>
+#include <cstdlib>
+#include <cstring>
 
-using namespace std;
-static int useTlli = 0;
-
-tlliValue* exitTlli(int i, tlliValue** val)
+void handle_command(char* cmd, std::vector<char*>* args)
 {
-	useTlli = 0;
+	char program[512];
+	snprintf(program, sizeof(program), "%s/%s", "/drives/roramdisk", cmd);
+	pid_t pid;
 
-	tlliValue* rtn;
-	tlliIntToValue(0, &rtn);
-	return rtn;
-}
-
-tlliValue* tlli_execute(int i, tlliValue** val)
-{
-	tlliValue* rtn;
-	char* buf = (char*) malloc(512);
-	
-	tlliValueToString(val[0], &buf, 512);
-	tlliIntToValue(execute_program(buf, 0, NULL), &rtn);
-	
-	free(buf);
-	return rtn;
-}
-
-void execute_script(const char* path, tlliContext* context)
-{
-	FILE* script = fopen(path, "r");
-
-	if (!script)
+	if(args->size() > 0)
 	{
-		printf("Shellscript does not exist!\n");
-		return;
-	}
-
-	char* content;
-	fseek(script, 0, SEEK_END);
-	size_t sz = ftell(script);
-	fseek(script, 0, SEEK_SET);
-
-	content = (char*)malloc(sz + 1);
-	fread(content, sz, 1, script);
-	fclose(script);
-
-	char* p = strtok(content, "\n");
-	tlliValue* retval = NULL;
-	char* outputBuffer = (char*)malloc(512);
-
-	while (p != NULL)
+		pid = execute_program(program, args->size(), &(*args)[0]);
+	}	
+	else
 	{
-		if (!strcmp(p, ""))
-		{
-			p = strtok(NULL, "\n");
-			continue;
-		}
-
-		if (tlliEvaluate(context, p, &retval) != TLLI_SUCCESS)
-		{
-			printf("Error: %s\n    %s\n\n", tlliError(), p);
-			tlliReleaseValue(&retval);
-			free(content);
-			return;
-		}
-
-		tlliValueToString(retval, &outputBuffer, 512);
-		tlliReleaseValue(&retval);
-
-		//printf("%s\n\n", outputBuffer);
-		p = strtok(NULL, "\n");
+		pid = execute_program(program, 0, NULL);
 	}
 
-	free(content);
+	if(pid)
+		waitpid(pid, NULL, 0);
+	else
+		std::cerr << "Could not execute command '" << cmd << "': " << strerror(errno) << std::endl;
+
+	for(int i = 0; i < args->size(); i++)
+		free((*args)[i]);
+
+	free(cmd);
+	delete args;
 }
 
-void  parse(char *line, char** argv)
+int lalamain(int argc, char* argv[])
 {
-	while(*line != '\0')
-	{       
-		while (*line == ' ' || *line == '\t' || *line == '\n' || *line=='|')
-			*line++ = '\0';     
-		
-		*argv++ = line;         
-		while (*line != '\0' && *line != ' ' && *line != '\t' && *line != '\n') 
-		
-		line++;
-	}
-	*argv = '\0';               
-}
-
-int count_args(char** argv)
-{
-	int i = 0;
-	while(*(argv++))
-		i++;
-	
-	return i;
-}
-
-int main()
-{
-	tlliValue* retval = NULL;
-	tlliContext* context = NULL;
-	tlliInitContext(&context);
-	tlliAddFunction(context, "exit", exitTlli);
-	tlliAddFunction(context, "execute", tlli_execute);
-	
-	execute_script("/drives/roramdisk/lisp/boot.lisp", context);
-	
-	//sleep(150);
-	//printf("\n\n\n");
-
-	cout << "The DayOS shell v0.1\n";
-	cout << "Type 'help' for a list of available commands.\n" << endl;
-	
-	// FILE* in = fopen("/dayos/dev/tty", "r");
-	// stdin = in;
-
-    char* buffer = (char*) malloc(512);
-	char* outputBuffer = (char*) malloc(512);
-	char** argv = (char**) malloc(sizeof(char*) * 512);
-	
-	while (1)
+	while(!feof(stdin))
 	{
-		printf("DayOS > ");
-		fflush(stdout);
-		
-		//read_line(stdin);
-		//fgets(buffer, 512, stdin);
-		gets(buffer);
-		parse(buffer, argv);
-		
-		//printf("Got input: %s\n", buffer);
-		//continue;
-		
-		if (!useTlli)
-		{
-			if (!strcmp("tlli", buffer))
-			{
-				useTlli = 1;
-				printf("Using TLLI for LISP interface. Type (exit) to return "
-					   "to the default shell.\n\n");
-			}
-			else if (!strcmp("help", buffer))
-			{
-				printf("Commands: help, tlli, readfloppy\n");
-			}
-			else if (!strcmp("exit", buffer))
-			{
-				return 0;
-			}
-			else if (!strcmp("writefile", buffer))
-			{
-				FILE* f = fopen("/drives/ramfs/file.txt", "w");
-
-				if (f)
-				{
-					printf("Successfully opened file!\n");
-					fputs("Hello World!!!!\n", f);
-					//fflush(f);
-					
-					fclose(f);
-					printf("Closed file\n");
-				}
-			}
-			else if (!strcmp("readfile", buffer))
-			{
-				FILE* f = fopen("/drives/ramfs/file.txt", "r");
-				char buf[256];
-				
-				if (f)
-				{
-					printf("Successfully opened file!\n");
-					//fgets(buf, 256, f);
-					fread(buf, 16, 1, f);
-					buf[16] = 0;
-					printf("Read: %s\n", buf);
-					
-					fclose(f);
-					printf("Closed file\n");
-				}
-			}
-			else if(!strcmp("ls", buffer))
-			{
-				DIR* dir = opendir(argv[1]);
-				struct dirent* entry;
-
-				while ((entry = readdir(dir)) != NULL) 
-				{
-					printf ("    %s\n", entry->d_name);
-				}
-				
-				closedir(dir);
-			}
-			else if(!strcmp("ioctl", buffer))
-			{
-			
-				printf("Testing ioctl TTY\n");
-				int fd = open("/dayos/dev/tty", O_WRONLY);
-				if(fd == -1)
-				{
-					perror("Could not open '/dayos/dev/tty'");
-					break;
-				}
-
-				printf("Result 1: %d\n", ioctl(fd, 0xCAFEBABE, 0));
-				printf("Result 2: %d\n", ioctl(fd, 0xDEADBEEF, 1, "SOMETHINGELSE"));
-
-				close(fd);
-				
-			}
-			else if(!strcmp("fcntl", buffer))
-			{
-			
-				printf("Testing fcntl file open -> write -> close.\n");
-				int fd = open("/dayos/dev/tty", O_WRONLY);
-				if(fd == -1)
-					{
-						perror("Could not open '/dayos/dev/tty'");
-						break;
-					}
-
-				write(fd, "HELLO WORLD\n", strlen("HELLO WORLD\n"));
-				close(fd);
-				
-			}
-			else if (!strcmp("raise", buffer))
-			{
-				raise(SIGSEGV);
-			}
-			else if (!strcmp("readram", buffer))
-			{
-				FILE* f = fopen("/dayos/dev/ram", "r");
-				unsigned int data[12];
-				
-				printf("\n\n");
-				
-				fread(data, 11, 1, f);
-				for (int i = 0; i < sizeof(data); i++)
-				{
-					printf("%x ", data[i]);
-				}
-				
-				fclose(f);
-				printf("\n\n");
-			}
-			else if (!strcmp("writeram", buffer))
-			{
-				FILE* f = fopen("/dayos/dev/ram", "r");
-				unsigned int data[12] = {0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF};
-				fwrite(data, sizeof(unsigned int), 12, f);
-				fputc('C', f);
-				
-				fclose(f);
-			}
-			else if (!strcmp("readfloppy", buffer))
-			{
-				uint32_t wantedSize = 1024;
-				FILE* f = fopen("/dayos/dev/fdc", "r");
-				// fseek(f, 1024, SEEK_SET);
-
-				unsigned char* buf = (unsigned char*) malloc(wantedSize);
-				uint32_t sz = fread(buf, wantedSize, 1, f);
-
-				printf("Read %d bytes\n\n");
-				for (int i = 0; i < sz; i++)
-				{
-					printf("%x ", buf[i]);
-				}
-				printf("Done.\n\n\n");
-
-				free(buf);
-				fclose(f);
-			}
-			else if (strlen(buffer) > 0)
-			{
-				char program[256];
-				snprintf(program, sizeof(program), "%s/%s", "/drives/roramdisk", buffer);
-				pid_t pid = execute_program(program, count_args(argv) - 1, argv + 1);
-				
-				if(pid)
-					waitpid(pid, NULL, 0);
-			}
-		}
-		else
-		{
-			if (tlliEvaluate(context, buffer, &retval) != TLLI_SUCCESS)
-			{
-				printf("Error: %s\n    %s\n\n", tlliError(), buffer);
-				tlliReleaseValue(&retval);
-				continue;
-			}
-
-			tlliValueToString(retval, &outputBuffer, 512);
-			tlliReleaseValue(&retval);
-
-			printf("%s\n\n", outputBuffer);
-		}
+		debug_printf("ITERATioN!!!\n");
+		putchar(fgetc(stdin));
+		fflush(stdout);	
 	}
 
-	return 0;
+	debug_printf("LALALA_DAADADA\n");
 }
+

@@ -10,6 +10,8 @@
 #define SIGBREAK 21
 #define SIGABRT 22
 #define NSIG 23
+#define SIGHUP 24
+#define SIGQUIT 25
 
 #define SIG_DFL 0
 #define SIG_IGN 1
@@ -18,6 +20,8 @@
 extern "C" {
 #endif
 
+	
+typedef int sigset_t;
 typedef int sig_atomic_t; 
 
 void (*signal(int sig, void (*func)(int)))(int);

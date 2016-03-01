@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef MALLOC_270_H
+
 extern void* sbrk(size_t size);
 
 #define HEADERSIZE sizeof(node_t)
@@ -37,17 +39,17 @@ node_t* createBlock(node_t* parent, size_t sz)
 	size_t oldLimit = currentLimit;
 	while(((uint32_t)parent->next) + sz >= (currentLimit - HEADERSIZE))
 	{
-		//sbrk(0x1000);
+		sbrk(0x1000);
 		currentLimit += 0x1000;
 	}
 	
 	/*currentLimit = MAX(currentLimit, ((uintptr_t) parent->next) + sz + HEADERSIZE);*/
-	if(oldLimit != currentLimit)
-	{
+	//if(oldLimit != currentLimit)
+	//{
 		/*currentLimit += 0x1000;
 		currentLimit &= ~0xFFF;		
-	*/	sbrk(currentLimit - oldLimit);
-	}
+	*///	sbrk(currentLimit - oldLimit);
+	//}
 	
 	parent->next->size = sz;
 	parent->next->next = NULL;
@@ -170,3 +172,9 @@ void InitHeap()
 	
 	currentLimit = ((uint32_t) root) + 0x1000;
 }
+#else
+void InitHeap()
+{
+
+}
+#endif

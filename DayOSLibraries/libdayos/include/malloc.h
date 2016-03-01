@@ -2,6 +2,7 @@
 #define __MALLOC_H
 
 #include <stddef.h>
+#include "dlmalloc.h"
 
 #ifdef __cplusplus
 extern "C" {

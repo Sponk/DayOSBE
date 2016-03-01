@@ -18,6 +18,13 @@ uint32_t get_index(uint32_t addr, uint32_t* offset)
 	return addr / 32;
 }
 
+static uint32_t is_free(void* addr)
+{
+	uint32_t offset;
+	uint32_t index = get_index((uint32_t) addr, &offset);
+	return (bitmap[index] & (1 << offset));
+}
+
 void pmm_free(void* addr)
 {
 	uint32_t offset;
@@ -32,13 +39,6 @@ static void use(void* addr)
 	uint32_t index = get_index((uint32_t) addr, &offset);
 	bitmap[index] |= (1 << offset);
 	free_memory -= 0x1000;
-}
-
-static uint32_t is_free(void* addr)
-{
-	uint32_t offset;
-	uint32_t index = get_index((uint32_t) addr, &offset);
-	return (bitmap[index] & (1 << offset));
 }
 
 void InitPmm(struct multiboot_info* mb_info)

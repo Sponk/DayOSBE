@@ -37,25 +37,25 @@ void destroy_context(vmm_context_t* context)
 	assert(context != kernel_context);
 
 	pmm_info();
-
 	int i = 0;
-	for(; i < 1024; i++)
+
+	// Free everything else
+	for (; i < 1024; i++)
 	{
-		if(context->pagedir[i] != 0 && context->pagedir[i] != kernel_context->pagedir[i])
+		if (context->pagedir[i] & 0x1)
 		{
-			uintptr_t* pagetable = (uintptr_t*) context->pagedir[i];
-			uintptr_t* kernel_table = (uintptr_t*) kernel_context->pagedir[i];
-			
-			for(int j = 0; j < 1024; j++)
+			uintptr_t* pagetable = (uintptr_t*)(context->pagedir[i] & ~0xFFF);
+
+			for (int j = 0; j < 1024; j++)
 			{
 				uintptr_t entry = pagetable[j] & ~0xFFF;
-				if(entry && entry != kernel_table[j] & ~0xFFF)
+
+				if (pagetable[j] & VMM_USED && pagetable[j] & VMM_ALLOCATED)
 				{
-					pmm_free((void*)(entry));
+				    pmm_free((void*) entry);
 				}
 			}
-			//DebugPrintf("Freeing page: 0x%x\n", context->pagedir[i] & 0xFFFFFF00);
-			pmm_free((void*)(context->pagedir[i] & 0xFFFFF000));
+			pmm_free((void*) pagetable);
 		}
 	}
 
@@ -65,28 +65,9 @@ void destroy_context(vmm_context_t* context)
 	pmm_info();
 }
 
-vmm_context_t* CreateUsermodeContext(int kernel_write)
+void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint8_t userspace, uint8_t allocated)
 {
-	vmm_context_t* context = create_context();
-	
-	int i = 0;
-	for(; i < 1024; i++)
-	{
-		context->pagedir[i] = kernel_context->pagedir[i];
-	}
-	
-	// FIXME: Der gesamte Kernel ist schreibbar im usermode?
-	//map_range(context, VM_KERNEL_START, VM_KERNEL_START,
-	//		  VM_KERNEL_END-VM_KERNEL_START, kernel_write);
-	
-	// Heap mappen
-	//map_range(context, HEAP_START, HEAP_START, HEAP_SIZE, 1);
-	
-	return context;
-}
-
-void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t userspace)
-{
+	assert(context != 0);
 	uint32_t pageIndex = virt / 0x1000;
 	uint32_t pdIndex = pageIndex / 1024;
 	uint32_t ptIndex = pageIndex % 1024;
@@ -101,6 +82,9 @@ void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t u
 	else
 		flags = VMM_USED | VMM_WRITE;
 
+	if(allocated)
+		flags |= VMM_ALLOCATED;
+	
 	// Wir brauchen 4k-Alignment
 	assert(!((virt & 0xFFF) || (phys & 0xFFF)));
 	
@@ -124,10 +108,10 @@ void map_page(vmm_context_t* context, uintptr_t virt, uintptr_t phys, uint32_t u
 		
 		context->pagedir[pdIndex] = (uint32_t) pageTable | flags;
 	}
-	
+
 	// Neues Mapping in the Page Table eintragen
 	pageTable[ptIndex] = phys | flags;
-	__asm volatile("invlpg %0" : : "m" (*(char*)virt)); 
+	__asm volatile("invlpg (%0)" : : "r" /*(*(char*)virt)*/ (virt) : "memory"); 
 }
 
 void map_range(vmm_context_t* context, uintptr_t start_virt, 
@@ -136,7 +120,7 @@ void map_range(vmm_context_t* context, uintptr_t start_virt,
 	int i;
 	for(i = start_virt; i <= start_virt + size; i += PAGESIZE)
 	{
-		map_page(context, i, start_phys, userspace);
+		map_page(context, i, start_phys, userspace, 0);
 		start_phys += PAGESIZE;
 	}
 }
@@ -150,8 +134,21 @@ void vmm_alloc(vmm_context_t* context, uintptr_t vaddr, uint32_t sz)
 	{
 		uintptr_t phys_page = (uintptr_t) pmm_alloc_start(HEAP_END);
 		assert(phys_page != 0);
-		map_page(context, i, phys_page, 1);
+		map_page(context, i, phys_page, 1, 1);
 	}
+}
+
+void enable_paging(int value)
+{
+	uint32_t cr0;
+	__asm volatile("mov %%cr0, %0" : "=r" (cr0));
+
+	if(value)
+		cr0 |= (1 << 31);
+	else
+		cr0 &= ~(1 << 31);
+	
+	__asm volatile("mov %0, %%cr0" : : "r" (cr0)); 
 }
 
 void InitVmm(struct multiboot_info* mb_info)
@@ -159,26 +156,46 @@ void InitVmm(struct multiboot_info* mb_info)
 	DebugPrintf("[ VMM ] Kernel at 0x%x - 0x%x\n", VM_KERNEL_START, VM_KERNEL_END);
 	DebugPrintf("[ VMM ] Pagepool at 0x%x - 0x%x\n", PAGEPOOL_START, PAGEPOOL_END);
 	
-	uint32_t cr0;
 	kernel_context = create_context();
 	
 	// FIXME: Der gesamte Kernel ist schreibbar im usermode?
 	map_range(kernel_context, VM_KERNEL_START, VM_KERNEL_START,
-			  VM_KERNEL_END - VM_KERNEL_START, 1);
+			  VM_KERNEL_END - VM_KERNEL_START, 0);
 	
 	map_range(kernel_context, PAGEPOOL_START, PAGEPOOL_START,
-			  PAGEPOOL_END - PAGEPOOL_START, 1);
+			  PAGEPOOL_END - PAGEPOOL_START, 0);
 	
 	// Heap mappen
-	map_range(kernel_context, HEAP_START, HEAP_START, HEAP_SIZE, 1);
+	map_range(kernel_context, HEAP_START, HEAP_START, HEAP_SIZE, 0);
 	
 	// Kernel Speicherkontext aktivieren
 	activate_memory_context(kernel_context);	
 	
 	// Paging einschalten
-	__asm volatile("mov %%cr0, %0" : "=r" (cr0));
-	cr0 |= (1 << 31);
-	__asm volatile("mov %0, %%cr0" : : "r" (cr0)); 
+	enable_paging(1);
 	
 	DebugLog("[ VMM ] Virtual Memory management succesfully initialized.");
+}
+
+vmm_context_t* CreateUsermodeContext(int kernel_write)
+{
+	vmm_context_t* context = create_context();
+	
+	//int i = 0;
+	//for(; i < 1024; i++)
+	//{
+	//	context->pagedir[i] = kernel_context->pagedir[i];
+	//}
+
+	// FIXME: Der gesamte Kernel ist schreibbar im usermode?
+	map_range(context, VM_KERNEL_START, VM_KERNEL_START,
+			  VM_KERNEL_END - VM_KERNEL_START, 1);
+	
+	map_range(context, PAGEPOOL_START, PAGEPOOL_START,
+			  PAGEPOOL_END - PAGEPOOL_START, 0);
+	
+	// Heap mappen
+	map_range(context, HEAP_START, HEAP_START, HEAP_SIZE, 0);
+	
+	return context;
 }

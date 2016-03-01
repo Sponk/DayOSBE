@@ -40,11 +40,15 @@ int receive_message_timeout(message_t* msg, pid_t who, uint32_t tries, uint32_t 
 int read_message_stream(void* data, size_t size, pid_t who)
 {
 	message_t msg;
-
+	
 	// Get prolog
 	RECEIVE(msg, who);
 	if(msg.signal != SIGNAL_OK) return 0;
 
+	// Be sure to only expect what can be taken and
+	// only what is going to be sent.
+	size = (size < msg.size) ? size : msg.size;
+	
 	size_t received = 0;
 	while(received < size)
 	{

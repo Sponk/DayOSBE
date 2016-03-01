@@ -15,6 +15,20 @@
 // FIXME: NOT PERFECT: THE KERNEL HEAP IS STILL ACCESSIBLE!
 #define CHECK_POINTER(p) ((p > PAGEPOOL_END))
 
+// NAPALM 16BIT STUFF
+// define our structure
+typedef struct __attribute__ ( (packed))
+{
+	unsigned short di, si, bp, sp, bx, dx, cx, ax;
+	unsigned short gs, fs, es, ds, eflags;
+}
+regs16_t;
+
+// tell compiler our int32 function is external
+extern void int32 (unsigned char intnum, regs16_t *regs);
+
+extern vmm_context_t* kernel_context;
+
 // TODO: Syscalls einrichten
 struct cpu* Syscall(struct cpu* cpu_old)
 {
@@ -66,7 +80,7 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	
 	// sbrk
 	case 5: {
-			if((int) cpu_old->ebx <= 0)
+			if((int) cpu_old->ebx < 0)
 			{
 				DebugLog("[ SYSCALL ] Can't sbrk process!");
 				cpu_old->eax = -1;
@@ -197,13 +211,13 @@ struct cpu* Syscall(struct cpu* cpu_old)
 			|| !CHECK_POINTER(cpu_old->ebx) 
 			|| (addr >= HEAP_START && addr <= HEAP_END))
 		{
-			DebugPrintf("Operation not permitted for process %d\n", current_process->uid);
+			DebugPrintf("Operation not permitted for process %d\n", current_process->pid);
 			asm("int $0x1");
 			break;
 		}
-		
-		map_page(current_process->context, addr, addr, 1);
-	}
+
+		map_page(current_process->context, addr, addr, 1, 0);		
+    }
 	break;
 	
 	// waitpid
@@ -218,7 +232,28 @@ struct cpu* Syscall(struct cpu* cpu_old)
 	case 15: {
 		cpu_old->eax = getTickCount();
 	}
-	
+	break;
+
+	// BIOS interrupt
+	case 16:
+	{
+		if (current_process->uid != 0)
+		{
+			DebugPrintf("[ SYSCALL ] Process %d tried to execute the BIOS "
+						"interrupt 0x%x without having enough rights.\n"
+						"Terminating process.\n",
+						current_process->pid, cpu_old->ebx);
+
+			asm("int $0x1");
+			break;
+		}
+
+		regs16_t regs;
+		regs.ax = cpu_old->ecx;
+		int32(cpu_old->ebx, &regs);
+	}
+	break;
+		
 	default: DebugPrintf("[ SYSCALL ] Unknown syscall 0x%x from %d\n", cpu_old->eax, current_process->pid);
 	}
 	

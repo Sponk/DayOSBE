@@ -78,8 +78,6 @@ int execute_program(const char* path, int argc, char* argv[])
 	
 	if(!exec)
 	{
-		perror("Could not open executable");
-		// printf("Could not find program %s!\n", path);
 		return 0;
 	}
 	
@@ -88,9 +86,9 @@ int execute_program(const char* path, int argc, char* argv[])
 	size_t sz = ftell(exec);
 	fseek(exec, 0, SEEK_SET);
 
-	content = (char*) malloc(sz);
+	content = (char*) malloc(sz);	
 	fread(content, sz, 1, exec);
-	
+
 	pid_t pid = syscall1(9, (uintptr_t) content);
 	
 	fclose(exec);

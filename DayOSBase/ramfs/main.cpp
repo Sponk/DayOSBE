@@ -101,7 +101,7 @@ int main()
 					send_message(&msg, msg.sender);
 					break;
 				}
-				
+
 				size = std::min(rq->offset + msg.size, f->info.st_size - rq->offset);
 				write_message_stream(f->content + rq->offset, size, sender);
 		    }
